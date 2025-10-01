@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom"
 import NavBar from "./components/NavBar.jsx"
 import RequireAuth from "./components/RequireAuth.jsx"
 import ScrollToTop from "./components/ScrollToTop.jsx"
+import Footer from "./components/Footer.jsx"
 import Contact from "./pages/Contact.jsx" 
 import Home from "./pages/Home.jsx"
 import Specialties from "./pages/Specialties.jsx"
@@ -22,6 +23,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col">
       <NavBar />
       <ScrollToTop />
+
       <main className="flex-1">
         <Routes>
           {/* Public routes */}
@@ -82,6 +84,8 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+
+      <Footer />
     </div>
   )
 }
