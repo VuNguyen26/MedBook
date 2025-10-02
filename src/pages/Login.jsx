@@ -2,12 +2,13 @@ import { useState } from "react"
 import { useNavigate, useLocation, Link } from "react-router-dom"
 import { useAuth } from "../store/auth.js"
 import { api } from "../store/api.js"
-import { Phone, Lock } from "lucide-react" // npm install lucide-react
+import { Mail, Lock } from "lucide-react"
 
 export default function Login() {
-  const [phone, setPhone] = useState("0900000001")
-  const [password, setPassword] = useState("123456")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+
   const nav = useNavigate()
   const location = useLocation()
   const from = location.state?.from?.pathname || "/"
@@ -15,9 +16,9 @@ export default function Login() {
 
   const submit = async (e) => {
     e.preventDefault()
-    const u = await login(phone, password, api)
+    const u = await login(email, password, api)
     if (!u) {
-      setError("❌ Sai số điện thoại hoặc mật khẩu")
+      setError("❌ Email hoặc mật khẩu không chính xác")
       return
     }
     const destByRole = {
@@ -30,53 +31,77 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-blue-50 to-indigo-100 flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="max-w-5xl w-full bg-white rounded-2xl shadow-xl grid md:grid-cols-2 overflow-hidden">
-        {/* Left image */}
-        <div className="hidden md:flex items-center justify-center bg-blue-600 p-8">
-          <img
-            src="https://cdn-icons-png.flaticon.com/512/3209/3209265.png"
-            alt="Login illustration"
-            className="w-64"
-          />
+        
+        {/* Left side */}
+        <div className="bg-teal-700 text-white flex flex-col justify-between p-10">
+          <div>
+            <div className="flex items-center gap-2 mb-8">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                📅
+              </div>
+              <span className="text-2xl font-semibold">MediBook</span>
+            </div>
+            <h1 className="text-3xl font-bold leading-tight mb-4">
+              Đặt lịch khám bệnh <br /> dễ dàng, nhanh chóng
+            </h1>
+            <p className="text-white/90">
+              Kết nối với các bác sĩ và cơ sở y tế uy tín. Quản lý lịch hẹn khám của bạn một cách thuận tiện.
+            </p>
+          </div>
+          <p className="text-xs text-white/70">
+            © 2025 MediBook. Nền tảng đặt lịch khám bệnh trực tuyến.
+          </p>
         </div>
 
-        {/* Right form */}
-        <div className="p-8 md:p-12 flex flex-col justify-center">
-          <h2 className="text-3xl font-bold text-slate-900 mb-6 text-center">
-            Đăng nhập <span className="text-blue-600">MedBook</span>
+        {/* Right side - Form */}
+        <div className="p-10 flex flex-col justify-center">
+          <h2 className="text-2xl font-bold text-center text-slate-900 mb-2">
+            Đăng nhập
           </h2>
+          <p className="text-sm text-center text-slate-600 mb-6">
+            Nhập thông tin để truy cập tài khoản của bạn
+          </p>
 
           <form onSubmit={submit} className="space-y-5">
-            {/* Phone */}
+            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Số điện thoại
+                Email
               </label>
               <div className="relative">
-                <Phone className="absolute left-3 top-2.5 text-slate-400" size={18} />
+                <Mail className="absolute left-3 top-2.5 text-slate-900" size={18} />
                 <input
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="090..."
+                  type="email"
+                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="ten@email.com"
+                  required
                 />
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Mật khẩu
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-slate-700">
+                  Mật khẩu
+                </label>
+                <a href="#" className="text-sm text-teal-700 hover:underline">
+                  Quên mật khẩu?
+                </a>
+              </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-2.5 text-slate-400" size={18} />
+                <Lock className="absolute left-3 top-2.5 text-slate-900" size={18} />
                 <input
                   type="password"
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="******"
+                  required
                 />
               </div>
             </div>
@@ -88,27 +113,40 @@ export default function Login() {
               </div>
             )}
 
-            {/* Button */}
+            {/* Submit button */}
             <button
               type="submit"
-              className="w-full py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium hover:from-blue-700 hover:to-indigo-700 transition"
+              className="w-full py-2.5 rounded-lg bg-teal-700 text-white font-medium hover:bg-teal-800 transition"
             >
               Đăng nhập
             </button>
           </form>
 
-          {/* Demo info */}
-          <div className="mt-6 text-xs text-slate-500 text-center">
-            Tài khoản demo: 0900000001/2/3/4 — mật khẩu: 123456
+          {/* Social login */}
+          <div className="my-6 flex items-center">
+            <div className="flex-1 border-t border-slate-200"></div>
+            <span className="px-3 text-sm text-slate-500">HOẶC TIẾP TỤC VỚI</span>
+            <div className="flex-1 border-t border-slate-200"></div>
           </div>
 
-          {/* Extra */}
-          <div className="mt-4 text-sm text-center text-slate-600">
+          <div className="flex gap-4">
+            <button className="flex-1 border border-slate-300 py-2 rounded-lg flex items-center justify-center gap-2 bg-white hover:bg-slate-50 transition">
+              <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+              <span className="text-slate-700 font-medium">Google</span>
+            </button>
+            <button className="flex-1 border border-slate-300 py-2 rounded-lg flex items-center justify-center gap-2 bg-white hover:bg-slate-50 transition">
+              <img src="https://www.svgrepo.com/show/448224/facebook.svg" alt="Facebook" className="w-5 h-5" />
+              <span className="text-slate-700 font-medium">Facebook</span>
+            </button>
+          </div>
+
+          {/* Register */}
+          <p className="mt-6 text-sm text-center text-slate-600">
             Chưa có tài khoản?{" "}
-            <Link to="/register" className="text-blue-600 hover:underline">
+            <Link to="/register" className="text-teal-700 hover:underline font-semibold">
               Đăng ký ngay
             </Link>
-          </div>
+          </p>
         </div>
       </div>
     </div>

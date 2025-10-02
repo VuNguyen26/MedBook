@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom"
+import { Routes, Route, useLocation } from "react-router-dom"
 import NavBar from "./components/NavBar.jsx"
 import RequireAuth from "./components/RequireAuth.jsx"
 import ScrollToTop from "./components/ScrollToTop.jsx"
@@ -19,6 +19,10 @@ import Register from "./pages/Register.jsx"
 import About from "./pages/About.jsx"
 
 export default function App() {
+  const location = useLocation()
+  // Các trang không có Footer
+  const hideFooter = ["/login", "/register"].includes(location.pathname)
+
   return (
     <div className="min-h-screen flex flex-col">
       <NavBar />
@@ -85,7 +89,7 @@ export default function App() {
         </Routes>
       </main>
 
-      <Footer />
+      {!hideFooter && <Footer />}
     </div>
   )
 }
