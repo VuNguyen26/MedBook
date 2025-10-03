@@ -1,21 +1,20 @@
-// src/components/RequireAuth.jsx
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../store/auth.js";
+import { Navigate, useLocation } from "react-router-dom"
+import { auth } from "../store/auth"
 
 export default function RequireAuth({ children, roles }) {
-  const { user } = useAuth();
-  const location = useLocation();
+  const location = useLocation()
+  const user = auth.getCurrentUser()
 
+  // Nếu chưa đăng nhập → chuyển sang trang login
   if (!user) {
-    // Chưa đăng nhập → redirect về login
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />
   }
 
+  // Nếu có truyền roles và user không thuộc roles đó → chặn truy cập
   if (roles && !roles.includes(user.role)) {
-    // Sai quyền → redirect về Home
-    return <Navigate to="/" replace />;
+    return <Navigate to="/" replace />
   }
 
-  // Đúng quyền → render children
-  return children;
+  // Nếu hợp lệ → render component con
+  return children
 }

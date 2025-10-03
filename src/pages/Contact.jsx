@@ -1,6 +1,50 @@
-import { Phone, Mail, MapPin, Clock } from "lucide-react";
+import { useState } from "react"
+import { Phone, Mail, MapPin, Clock } from "lucide-react"
+import { toast } from "react-toastify"
 
 export default function Contact() {
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
+  const [subject, setSubject] = useState("")
+  const [message, setMessage] = useState("")
+
+  const submit = (e) => {
+    e.preventDefault()
+
+    // Kiểm tra bắt buộc
+    if (!firstName || !lastName || !email || !phone || !message) {
+      toast.error("❌ Vui lòng nhập đầy đủ thông tin bắt buộc")
+      return
+    }
+
+    // Validate số điện thoại
+    const phoneRegex = /^[0-9]{10}$/
+    if (!phoneRegex.test(phone)) {
+      toast.error("❌ Số điện thoại phải có đúng 10 chữ số")
+      return
+    }
+
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      toast.error("❌ Email không hợp lệ")
+      return
+    }
+
+    // Thành công
+    toast.success("🎉 Tin nhắn đã được gửi thành công! Chúng tôi sẽ liên hệ lại sớm.")
+
+    // Reset form
+    setFirstName("")
+    setLastName("")
+    setEmail("")
+    setPhone("")
+    setSubject("")
+    setMessage("")
+  }
+
   return (
     <div className="bg-white">
       {/* Hero */}
@@ -75,9 +119,7 @@ export default function Contact() {
       >
         {/* Thông tin liên hệ */}
         <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-slate-900">
-            Thông tin liên hệ
-          </h2>
+          <h2 className="text-2xl font-bold text-slate-900">Thông tin liên hệ</h2>
           <p className="text-slate-600">
             Đội ngũ y bác sĩ chuyên nghiệp của chúng tôi luôn sẵn sàng phục vụ
             bạn với tất cả sự tận tâm và chuyên môn cao.
@@ -88,33 +130,22 @@ export default function Contact() {
               {
                 icon: <Phone className="w-6 h-6 text-teal-600" />,
                 title: "Điện thoại",
-                desc: [
-                  "Tổng đài đặt lịch: 1900 1234",
-                  "Hotline khẩn cấp: 0912 345 678",
-                ],
+                desc: ["Tổng đài đặt lịch: 1900 1234", "Hotline khẩn cấp: 0912 345 678"],
               },
               {
                 icon: <Mail className="w-6 h-6 text-teal-600" />,
                 title: "Email",
-                desc: [
-                  "Đặt lịch khám: datlich@phongkham.vn",
-                  "Hỗ trợ khách hàng: hotro@phongkham.vn",
-                ],
+                desc: ["Đặt lịch khám: datlich@phongkham.vn", "Hỗ trợ khách hàng: hotro@phongkham.vn"],
               },
               {
                 icon: <MapPin className="w-6 h-6 text-teal-600" />,
                 title: "Địa chỉ",
-                desc: [
-                  "Phòng khám đa khoa, 123 Đường Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh",
-                ],
+                desc: ["Phòng khám đa khoa, 123 Đường Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh"],
               },
               {
                 icon: <Clock className="w-6 h-6 text-teal-600" />,
                 title: "Giờ làm việc",
-                desc: [
-                  "Thứ 2 - Thứ 6: 7:00 - 20:00",
-                  "Thứ 7 - Chủ nhật: 8:00 - 17:00",
-                ],
+                desc: ["Thứ 2 - Thứ 6: 7:00 - 20:00", "Thứ 7 - Chủ nhật: 8:00 - 17:00"],
               },
             ].map((item, i) => (
               <div
@@ -124,9 +155,7 @@ export default function Contact() {
                 <div className="w-10 h-10 flex items-center justify-center bg-teal-50 rounded-full mb-3">
                   {item.icon}
                 </div>
-                <h3 className="font-semibold text-slate-900 mb-1">
-                  {item.title}
-                </h3>
+                <h3 className="font-semibold text-slate-900 mb-1">{item.title}</h3>
                 {item.desc.map((d, idx) => (
                   <p key={idx} className="text-slate-600">
                     {d}
@@ -139,15 +168,12 @@ export default function Contact() {
 
         {/* Form liên hệ */}
         <div className="p-8 bg-white rounded-xl shadow-lg border border-slate-200 hover:shadow-xl transition duration-300">
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">
-            Gửi tin nhắn cho chúng tôi
-          </h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Gửi tin nhắn cho chúng tôi</h2>
           <p className="text-slate-600 mb-6">
-            Điền thông tin vào form bên dưới và chúng tôi sẽ phản hồi trong vòng
-            24 giờ.
+            Điền thông tin vào form bên dưới và chúng tôi sẽ phản hồi trong vòng 24 giờ.
           </p>
 
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={submit}>
             {/* Họ & Tên */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -156,6 +182,8 @@ export default function Contact() {
                 </label>
                 <input
                   type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   placeholder="Nguyễn Văn"
                   required
                   className="w-full p-3 border border-slate-300 rounded-lg bg-white text-slate-800 
@@ -168,6 +196,8 @@ export default function Contact() {
                 </label>
                 <input
                   type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   placeholder="An"
                   required
                   className="w-full p-3 border border-slate-300 rounded-lg bg-white text-slate-800 
@@ -183,6 +213,8 @@ export default function Contact() {
               </label>
               <input
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="email@example.com"
                 required
                 className="w-full p-3 border border-slate-300 rounded-lg bg-white text-slate-800 
@@ -197,7 +229,9 @@ export default function Contact() {
               </label>
               <input
                 type="text"
-                placeholder="0912 345 678"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="0912345678"
                 required
                 className="w-full p-3 border border-slate-300 rounded-lg bg-white text-slate-800 
                          placeholder-slate-400 focus:ring-2 focus:ring-teal-600 focus:border-teal-600 outline-none"
@@ -206,11 +240,11 @@ export default function Contact() {
 
             {/* Chủ đề */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Chủ đề
-              </label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Chủ đề</label>
               <input
                 type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
                 placeholder="Đặt lịch khám bệnh"
                 className="w-full p-3 border border-slate-300 rounded-lg bg-white text-slate-800 
                          placeholder-slate-400 focus:ring-2 focus:ring-teal-600 focus:border-teal-600 outline-none"
@@ -224,6 +258,8 @@ export default function Contact() {
               </label>
               <textarea
                 rows="4"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 placeholder="Vui lòng mô tả chi tiết yêu cầu của bạn..."
                 required
                 className="w-full p-3 border border-slate-300 rounded-lg bg-white text-slate-800 
@@ -245,12 +281,9 @@ export default function Contact() {
       {/* Map */}
       <section className="bg-slate-50 py-20">
         <div className="max-w-6xl mx-auto px-6 text-center">
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">
-            Vị trí phòng khám
-          </h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Vị trí phòng khám</h2>
           <p className="text-slate-600 mb-8">
-            Chúng tôi nằm ở vị trí thuận tiện, dễ dàng tiếp cận bằng nhiều
-            phương tiện giao thông công cộng.
+            Chúng tôi nằm ở vị trí thuận tiện, dễ dàng tiếp cận bằng nhiều phương tiện giao thông công cộng.
           </p>
           <div className="rounded-xl overflow-hidden shadow-lg">
             <iframe
@@ -279,5 +312,5 @@ export default function Contact() {
         </div>
       </section>
     </div>
-  );
+  )
 }

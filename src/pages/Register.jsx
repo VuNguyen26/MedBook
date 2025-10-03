@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { api } from "../store/api.js"
+import { auth } from "../store/auth"
 import { User, Mail, Phone, Lock } from "lucide-react"
+import { toast } from "react-toastify"
 
 export default function Register() {
   const [name, setName] = useState("")
@@ -10,31 +11,50 @@ export default function Register() {
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
   const [agree, setAgree] = useState(false)
-  const [error, setError] = useState("")
   const nav = useNavigate()
 
   const submit = (e) => {
     e.preventDefault()
+
+    // Kiểm tra rỗng
     if (!name || !email || !phone || !password || !confirm) {
-      setError("❌ Vui lòng nhập đầy đủ thông tin")
-      return
-    }
-    if (password.length < 8) {
-      setError("❌ Mật khẩu phải có ít nhất 8 ký tự")
-      return
-    }
-    if (password !== confirm) {
-      setError("❌ Mật khẩu xác nhận không khớp")
-      return
-    }
-    if (!agree) {
-      setError("❌ Bạn cần đồng ý với Điều khoản & Chính sách bảo mật")
+      toast.error("❌ Vui lòng nhập đầy đủ thông tin")
       return
     }
 
-    // Demo thêm user
-    api.addUser({ name, email, phone, password, role: "patient" })
-    nav("/login")
+    // Kiểm tra số điện thoại (10 số, chỉ chứa số)
+    const phoneRegex = /^[0-9]{10}$/
+    if (!phoneRegex.test(phone)) {
+      toast.error("❌ Số điện thoại phải có đúng 10 chữ số")
+      return
+    }
+
+    // Kiểm tra độ dài mật khẩu (>= 6 ký tự)
+    if (password.trim().length < 6) {
+      toast.error("❌ Mật khẩu phải có ít nhất 6 ký tự")
+      return
+    }
+
+    // Kiểm tra xác nhận mật khẩu
+    if (password !== confirm) {
+      toast.error("❌ Mật khẩu xác nhận không khớp")
+      return
+    }
+
+    // Kiểm tra đồng ý điều khoản
+    if (!agree) {
+      toast.error("❌ Bạn cần đồng ý với Điều khoản & Chính sách bảo mật")
+      return
+    }
+
+    // Thực hiện đăng ký
+    try {
+      auth.register({ name, email, phone, password })
+      toast.success("🎉 Đăng ký thành công! Vui lòng đăng nhập.")
+      nav("/login")
+    } catch (err) {
+      toast.error(err.message)
+    }
   }
 
   return (
@@ -146,7 +166,7 @@ export default function Register() {
                 />
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                Mật khẩu phải có ít nhất 8 ký tự
+                Mật khẩu phải có ít nhất 6 ký tự
               </p>
             </div>
 
@@ -171,62 +191,37 @@ export default function Register() {
 
             {/* Checkbox */}
             <div className="flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  checked={agree}
-                  onChange={(e) => setAgree(e.target.checked)}
-                  className="mt-1 accent-teal-700"
-                />
-                <span className="text-sm text-slate-600">
-                  Tôi đồng ý với{" "}
-                  <a href="#" className="text-teal-700 hover:underline">
-                    Điều khoản sử dụng
-                  </a>{" "}
-                  và{" "}
-                  <a href="#" className="text-teal-700 hover:underline">
-                    Chính sách bảo mật
-                  </a>
-                </span>
-              </div>
+              <input
+                type="checkbox"
+                checked={agree}
+                onChange={(e) => setAgree(e.target.checked)}
+                className="mt-1 accent-teal-700"
+              />
+              <span className="text-sm text-slate-600">
+                Tôi đồng ý với{" "}
+                <a href="#" className="text-teal-700 hover:underline">
+                  Điều khoản sử dụng
+                </a>{" "}
+                và{" "}
+                <a href="#" className="text-teal-700 hover:underline">
+                  Chính sách bảo mật
+                </a>
+              </span>
+            </div>
 
-              {/* Error */}
-              {error && (
-                <div className="text-sm text-red-600 bg-red-50 border border-red-200 p-2 rounded-lg">
-                  {error}
-                </div>
-              )}
-
-              {/* Button */}
-              <button
-                type="submit"
-                disabled={!agree}  // chỉ bật khi agree = true
-                className={`w-full py-2.5 rounded-lg font-medium transition
-                  ${agree
-                    ? "bg-teal-700 text-white hover:bg-teal-800"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }`}
-                >
-                Tạo tài khoản
-              </button>
+            {/* Button */}
+            <button
+              type="submit"
+              disabled={!agree}
+              className={`w-full py-2.5 rounded-lg font-medium transition
+                ${agree
+                  ? "bg-teal-700 text-white hover:bg-teal-800"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
+            >
+              Tạo tài khoản
+            </button>
           </form>
-
-          {/* Social login */}
-          <div className="my-6 flex items-center">
-            <div className="flex-1 border-t border-slate-200"></div>
-            <span className="px-3 text-sm text-slate-500">HOẶC ĐĂNG KÝ VỚI</span>
-            <div className="flex-1 border-t border-slate-200"></div>
-          </div>
-
-          <div className="flex gap-4">
-            <button className="flex-1 border border-slate-300 py-2 rounded-lg flex items-center justify-center gap-2 bg-white hover:bg-slate-50 transition">
-              <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-              <span className="text-slate-700 font-medium">Google</span>
-            </button>
-            <button className="flex-1 border border-slate-300 py-2 rounded-lg flex items-center justify-center gap-2 bg-white hover:bg-slate-50 transition">
-              <img src="https://www.svgrepo.com/show/448224/facebook.svg" alt="Facebook" className="w-5 h-5" />
-              <span className="text-slate-700 font-medium">Facebook</span>
-            </button>
-          </div>
 
           {/* Login link */}
           <p className="mt-6 text-sm text-center text-slate-600">

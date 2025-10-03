@@ -1,13 +1,13 @@
 import { Link, NavLink } from "react-router-dom"
-import { useAuth } from "../store/auth.js"
+import { auth } from "../store/auth"
 import { useState } from "react"
-import { Menu, X } from "lucide-react"
+import { Menu, X, User } from "lucide-react"
 
 export default function NavBar() {
-  const { user, logout } = useAuth()
   const [open, setOpen] = useState(false)
+  const [dropdown, setDropdown] = useState(false)
+  const user = auth.getCurrentUser()
 
-  // class cho NavLink
   const linkClass = ({ isActive }) =>
     "relative inline-block px-3 py-2 font-medium transition " +
     (isActive
@@ -16,10 +16,10 @@ export default function NavBar() {
         "after:content-[''] after:absolute after:left-1/2 after:bottom-0 after:h-[2px] after:w-0 after:bg-blue-600 " +
         "after:transition-all after:duration-300 hover:after:left-0 hover:after:w-full")
 
-  // scrollTop + đóng menu mobile
   const handleNavigate = () => {
     window.scrollTo({ top: 0, behavior: "smooth" })
     setOpen(false)
+    setDropdown(false)
   }
 
   return (
@@ -52,7 +52,7 @@ export default function NavBar() {
         </nav>
 
         {/* Actions */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-3 relative">
           {!user && (
             <Link
               to="/login"
@@ -63,22 +63,31 @@ export default function NavBar() {
             </Link>
           )}
           {user && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-slate-700">
-                Xin chào, <b>{user.name}</b>{" "}
-                <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                  {user.role}
-                </span>
-              </span>
+            <div className="flex items-center gap-3 relative">
+              <span className="text-sm text-slate-700">Xin chào, <b>{user.name}</b></span>
+              
+              {/* Icon user */}
               <button
-                className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-100 transition"
-                onClick={() => {
-                  logout()
-                  handleNavigate()
-                }}
+                onClick={() => setDropdown(!dropdown)}
+                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-100 transition"
               >
-                Đăng xuất
+                <User size={18} className="text-slate-700" />
               </button>
+
+              {/* Dropdown */}
+              {dropdown && (
+                <div className="absolute right-0 top-10 w-32 bg-white border rounded-lg shadow-lg overflow-hidden z-50">
+                  <button
+                    onClick={() => {
+                      auth.logout()
+                      window.location.href = "/login"
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -120,8 +129,8 @@ export default function NavBar() {
             ) : (
               <button
                 onClick={() => {
-                  logout()
-                  handleNavigate()
+                  auth.logout()
+                  window.location.href = "/login"
                 }}
                 className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 text-sm"
               >

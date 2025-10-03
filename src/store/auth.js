@@ -1,18 +1,56 @@
-import { create } from 'zustand'
+// auth.js - quản lý đăng nhập / đăng ký đơn giản bằng localStorage
 
-const AUTH_KEY = 'medbook-auth-v1'
+export const auth = {
+  // Đăng ký tài khoản mới
+  register({ name, email, phone, password, role = "patient" }) {
+    let users = JSON.parse(localStorage.getItem("users") || "[]")
 
-export const useAuth = create((set) => ({
-  user: JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'),
-  login: async (phone, password, api) => {
-    const u = api.authenticate(phone, password)
-    if (!u) return null
-    localStorage.setItem(AUTH_KEY, JSON.stringify(u))
-    set({ user: u })
-    return u
+    // Kiểm tra trùng email
+    if (users.find(u => u.email === email)) {
+      throw new Error("❌ Email đã tồn tại")
+    }
+
+    const newUser = {
+      id: Date.now(),
+      name,
+      email,
+      phone,
+      password, // demo chưa mã hoá
+      role
+    }
+
+    users.push(newUser)
+    localStorage.setItem("users", JSON.stringify(users))
+    localStorage.setItem("currentUser", JSON.stringify(newUser))
+
+    return newUser
   },
-  logout: () => {
-    localStorage.removeItem(AUTH_KEY)
-    set({ user: null })
+
+  // Đăng nhập
+  login(email, password) {
+    let users = JSON.parse(localStorage.getItem("users") || "[]")
+    const user = users.find(
+      u => u.email === email && u.password === password
+    )
+    if (!user) {
+      throw new Error("❌ Sai email hoặc mật khẩu")
+    }
+    localStorage.setItem("currentUser", JSON.stringify(user))
+    return user
+  },
+
+  // Lấy user hiện tại
+  getCurrentUser() {
+    return JSON.parse(localStorage.getItem("currentUser") || "null")
+  },
+
+  // Kiểm tra có đăng nhập hay chưa
+  isLoggedIn() {
+    return !!localStorage.getItem("currentUser")
+  },
+
+  // Đăng xuất
+  logout() {
+    localStorage.removeItem("currentUser")
   }
-}))
+}

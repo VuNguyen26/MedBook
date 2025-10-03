@@ -2,12 +2,12 @@ import { useState, useMemo } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import dayjs from "dayjs"
 import { api } from "../store/api.js"
-import { useAuth } from "../store/auth"
+import { auth } from "../store/auth"
 
 export default function DoctorDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const user = auth.getCurrentUser()
 
   // Lấy thông tin bác sĩ
   const doctor = api.getDoctors().find((d) => String(d.id) === String(id))
@@ -49,17 +49,24 @@ export default function DoctorDetail() {
   const morningSlots = slots.filter((s) => dayjs(s.start_at).hour() < 12)
   const eveningSlots = slots.filter((s) => dayjs(s.start_at).hour() >= 12)
 
+  // Slot đã chọn
+  const [selectedSlot, setSelectedSlot] = useState(null)
+
   // Đặt lịch
-  const handleBook = (slot) => {
+  const handleBook = () => {
     if (!user || user.role !== "patient") {
       navigate("/login", { state: { from: `/doctors/${id}` } })
+      return
+    }
+    if (!serviceId || !selectedSlot) {
+      alert("❌ Vui lòng chọn dịch vụ và khung giờ.")
       return
     }
     const appt = api.createAppointment({
       patient_id: user.id,
       doctor_id: id,
       service_id: service?.id,
-      start_at: slot.start_at,
+      start_at: selectedSlot.start_at,
     })
     if (appt?.id) navigate(`/payment/${appt.id}`)
     else alert("❌ Không thể tạo lịch hẹn.")
@@ -84,21 +91,11 @@ export default function DoctorDetail() {
               {doctor.title} {doctor.name}
             </h1>
             <p>{doctor.bio}</p>
-            <p>
-              Kinh nghiệm: <b className="text-blue-800">{doctor.experience_years}+ năm</b>
-            </p>
-            <p>
-              Ngôn ngữ: <b className="text-blue-800">Tiếng Việt, Tiếng Anh</b>
-            </p>
-            <p>
-              Chuyên khoa: <b>{specialty}</b>
-            </p>
-            <p>
-              Địa điểm: <b>{clinic}</b>
-            </p>
-            <p>
-              Đánh giá Google: <b className="text-yellow-600">0.0 ⭐</b>
-            </p>
+            <p>Kinh nghiệm: <b className="text-blue-800">{doctor.experience_years}+ năm</b></p>
+            <p>Ngôn ngữ: <b className="text-blue-800">Tiếng Việt, Tiếng Anh</b></p>
+            <p>Chuyên khoa: <b>{specialty}</b></p>
+            <p>Địa điểm: <b>{clinic}</b></p>
+            <p>Đánh giá Google: <b className="text-yellow-600">0.0 ⭐</b></p>
           </div>
         </div>
 
@@ -110,7 +107,6 @@ export default function DoctorDetail() {
           <button className="py-2">Ưu đãi</button>
         </div>
 
-        {/* Nội dung tab */}
         <div className="bg-white rounded-xl shadow p-6 text-slate-800">
           <h2 className="text-lg font-semibold mb-3">Giới thiệu</h2>
           <p>{doctor.bio || "Bác sĩ chưa có mô tả chi tiết."}</p>
@@ -120,28 +116,20 @@ export default function DoctorDetail() {
       {/* Bên phải - Đặt lịch hẹn */}
       <div className="bg-white rounded-xl shadow p-6 space-y-4 text-slate-800">
         <h2 className="text-lg font-bold text-blue-800">Đặt lịch khám</h2>
-        <p>
-          Phí khám: <b className="text-blue-800">{doctor.fee?.toLocaleString()}đ</b>
-        </p>
-
-        {/* Chọn loại hình */}
-        <div className="flex border rounded-lg overflow-hidden">
-          <button className="flex-1 py-2 bg-blue-50 text-blue-800 font-medium">Khám tại cơ sở</button>
-          <button className="flex-1 py-2 text-slate-800">Khám tại nhà</button>
-        </div>
+        <p>Phí khám: <b className="text-blue-800">{doctor.fee?.toLocaleString()}đ</b></p>
 
         {/* Chọn dịch vụ */}
         <select
-            className="w-full border rounded-lg p-2 bg-white text-slate-800"
-            value={serviceId || ""}
-            onChange={(e) => setServiceId(e.target.value)}
-          >
-            {services.map((s) => (
-              <option key={s.id} value={s.id} className="text-slate-800">
-                {s.name} — {s.fee.toLocaleString()}đ ({s.duration_minutes}')
-              </option>
-            ))}
-          </select>
+          className="w-full border rounded-lg p-2 bg-white text-slate-800"
+          value={serviceId || ""}
+          onChange={(e) => setServiceId(e.target.value)}
+        >
+          {services.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name} — {s.fee.toLocaleString()}đ ({s.duration_minutes}')
+            </option>
+          ))}
+        </select>
 
         {/* Tabs ngày */}
         <div className="flex gap-2">
@@ -154,6 +142,7 @@ export default function DoctorDetail() {
               onClick={() => {
                 setTab(d.key)
                 setDate(d.date.format("YYYY-MM-DD"))
+                setSelectedSlot(null) // reset slot khi đổi ngày
               }}
             >
               {d.label}
@@ -171,8 +160,12 @@ export default function DoctorDetail() {
               {morningSlots.map((s, idx) => (
                 <button
                   key={idx}
-                  onClick={() => handleBook(s)}
-                  className="px-3 py-2 text-sm rounded-lg border hover:bg-blue-800 hover:text-white transition"
+                  onClick={() => setSelectedSlot(s)}
+                  className={`px-3 py-2 text-sm rounded-lg border transition ${
+                    selectedSlot?.start_at === s.start_at
+                      ? "bg-blue-800 text-white"
+                      : "hover:bg-blue-800 hover:text-white"
+                  }`}
                 >
                   {dayjs(s.start_at).format("HH:mm")}
                 </button>
@@ -191,8 +184,12 @@ export default function DoctorDetail() {
               {eveningSlots.map((s, idx) => (
                 <button
                   key={idx}
-                  onClick={() => handleBook(s)}
-                  className="px-3 py-2 text-sm rounded-lg border hover:bg-blue-800 hover:text-white transition"
+                  onClick={() => setSelectedSlot(s)}
+                  className={`px-3 py-2 text-sm rounded-lg border transition ${
+                    selectedSlot?.start_at === s.start_at
+                      ? "bg-blue-800 text-white"
+                      : "hover:bg-blue-800 hover:text-white"
+                  }`}
                 >
                   {dayjs(s.start_at).format("HH:mm")}
                 </button>
@@ -200,6 +197,19 @@ export default function DoctorDetail() {
             </div>
           )}
         </div>
+
+        {/* Nút đặt lịch */}
+        <button
+          onClick={handleBook}
+          disabled={!selectedSlot || !serviceId}
+          className={`w-full py-2.5 rounded-lg font-medium transition ${
+            selectedSlot && serviceId
+              ? "bg-blue-800 text-white hover:bg-blue-900"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
+        >
+          Đặt lịch
+        </button>
       </div>
     </div>
   )
