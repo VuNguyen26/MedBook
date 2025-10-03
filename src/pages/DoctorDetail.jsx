@@ -62,14 +62,28 @@ export default function DoctorDetail() {
       alert("❌ Vui lòng chọn dịch vụ và khung giờ.")
       return
     }
+
+    // Tạo appointment
     const appt = api.createAppointment({
       patient_id: user.id,
       doctor_id: id,
       service_id: service?.id,
       start_at: selectedSlot.start_at,
     })
-    if (appt?.id) navigate(`/payment/${appt.id}`)
-    else alert("❌ Không thể tạo lịch hẹn.")
+
+    if (appt?.id) {
+      navigate(`/payment/${appt.id}`, {
+        state: {
+          doctor,
+          service,
+          date,
+          time: dayjs(selectedSlot.start_at).format("HH:mm"),
+          fee: service?.fee || doctor.fee || 0,
+        },
+      })
+    } else {
+      alert("❌ Không thể tạo lịch hẹn.")
+    }
   }
 
   // Helper
@@ -116,7 +130,12 @@ export default function DoctorDetail() {
       {/* Bên phải - Đặt lịch hẹn */}
       <div className="bg-white rounded-xl shadow p-6 space-y-4 text-slate-800">
         <h2 className="text-lg font-bold text-blue-800">Đặt lịch khám</h2>
-        <p>Phí khám: <b className="text-blue-800">{doctor.fee?.toLocaleString()}đ</b></p>
+        <p>
+          Phí khám:{" "}
+          <b className="text-blue-800">
+            {service?.fee?.toLocaleString() || doctor.fee?.toLocaleString()}đ
+          </b>
+        </p>
 
         {/* Chọn dịch vụ */}
         <select
@@ -142,7 +161,7 @@ export default function DoctorDetail() {
               onClick={() => {
                 setTab(d.key)
                 setDate(d.date.format("YYYY-MM-DD"))
-                setSelectedSlot(null) // reset slot khi đổi ngày
+                setSelectedSlot(null)
               }}
             >
               {d.label}
