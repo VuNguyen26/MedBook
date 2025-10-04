@@ -8,7 +8,7 @@ export default {
       }
     },
   },
-  plugins: [require("daisyui")],   // ✅ thêm dòng này
+  plugins: [require("daisyui")],
   daisyui: {
     themes: ["light", "corporate"], // bạn có thể thử: "cupcake", "emerald", "business", "dark"...
   },

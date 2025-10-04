@@ -1,6 +1,17 @@
-// auth.js - quản lý đăng nhập / đăng ký đơn giản bằng localStorage
-
 export const auth = {
+
+  initDefaultUsers() {
+    let users = JSON.parse(localStorage.getItem("users") || "[]")
+
+    if (users.length === 0) {
+      users = [
+        { id: 1, name: "Doctor Test", email: "doctor@example.com", phone: "111", password: "123", role: "doctor" },
+        { id: 2, name: "Patient Test", email: "user@example.com", phone: "222", password: "123", role: "patient" }
+      ]
+      localStorage.setItem("users", JSON.stringify(users))
+    }
+  },
+
   // Đăng ký tài khoản mới
   register({ name, email, phone, password, role = "patient" }) {
     let users = JSON.parse(localStorage.getItem("users") || "[]")
@@ -54,3 +65,6 @@ export const auth = {
     localStorage.removeItem("currentUser")
   }
 }
+
+// ⚡ Gọi init mặc định khi load app
+auth.initDefaultUsers()

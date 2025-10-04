@@ -19,13 +19,7 @@ export default function Login() {
       const u = auth.login(email, password)
 
       // Thông báo thành công
-      toast.success(" 🎉 Đăng nhập thành công!")
-
-      // Điều hướng theo role
-      const destByRole = {
-        doctor: "/doctor",
-        admin: "/admin",
-      }
+      toast.success("🎉 Đăng nhập thành công!")
 
       if (u.role === "patient") {
         nav(from !== "/" ? from : "/", { replace: true })

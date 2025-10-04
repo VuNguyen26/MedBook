@@ -14,7 +14,6 @@ import DoctorDetail from "./pages/DoctorDetail.jsx"
 import Payment from "./pages/Payment.jsx"
 import Patient from "./pages/Patient.jsx"
 import DoctorBoard from "./pages/DoctorBoard.jsx"
-import Admin from "./pages/Admin.jsx"
 import Login from "./pages/Login.jsx"
 import NotFound from "./pages/NotFound.jsx"
 import Register from "./pages/Register.jsx"
@@ -24,7 +23,8 @@ import ResetPassword from "./pages/ResetPassword.jsx"
 
 export default function App() {
   const location = useLocation()
-  // Các trang không có Footer
+
+  // Footer ẩn cho login/register
   const hideFooter = ["/login", "/register"].includes(location.pathname)
 
   return (
@@ -70,14 +70,6 @@ export default function App() {
             element={
               <RequireAuth roles={["doctor"]}>
                 <DoctorBoard />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <RequireAuth roles={["admin"]}>
-                <Admin />
               </RequireAuth>
             }
           />
