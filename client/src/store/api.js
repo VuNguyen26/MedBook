@@ -25,8 +25,7 @@ const defaultDB = {
   ],
 
   clinic_locations: [
-    { id: 1, name: 'Cơ sở 1', address: 'Q.1, TP.HCM', hotline: '1900-000-111' },
-    { id: 2, name: 'Cơ sở 2', address: 'Q.3, TP.HCM', hotline: '1900-000-222' },
+    { id: 1, name: 'Cơ sở 1', address: '273 An Dương Vương, phường Chợ Quán, TP.HCM', hotline: '1900-000-111' },
   ],
 
   doctors: [
@@ -54,7 +53,6 @@ const defaultDB = {
 
   services: [
     { id: 101, name: 'Khám chuyên khoa', code: 'KS-CK', fee: 200000, duration_minutes: 20, active: true },
-    { id: 102, name: 'Khám tổng quát', code: 'KS-TQ', fee: 300000, duration_minutes: 30, active: true },
   ],
 
   // 🔹 Tự sinh lịch làm việc: tất cả bác sĩ, 7 ngày/tuần, sáng + chiều
