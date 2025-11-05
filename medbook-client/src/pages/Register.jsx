@@ -1,72 +1,84 @@
-import { useState } from "react"
-import { useNavigate, Link } from "react-router-dom"
-import { auth } from "../store/auth"
-import { User, Mail, Phone, Lock } from "lucide-react"
-import { toast } from "react-toastify"
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import userApi from "../api/userApi";
+import { User, Mail, Phone, Lock } from "lucide-react";
+import { toast } from "react-toastify";
 
 export default function Register() {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [phone, setPhone] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirm, setConfirm] = useState("")
-  const [agree, setAgree] = useState(false)
-  const nav = useNavigate()
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [agree, setAgree] = useState(false);
+  const nav = useNavigate();
 
-  const submit = (e) => {
-    e.preventDefault()
+  const submit = async (e) => {
+    e.preventDefault();
 
-    // Kiểm tra rỗng
+    // Kiểm tra dữ liệu cơ bản
     if (!name || !email || !phone || !password || !confirm) {
-      toast.error("❌ Vui lòng nhập đầy đủ thông tin")
-      return
+      toast.error("Vui lòng nhập đầy đủ thông tin");
+      return;
     }
 
-    // Kiểm tra số điện thoại (10 số, chỉ chứa số)
-    const phoneRegex = /^[0-9]{10}$/
-    if (!phoneRegex.test(phone)) {
-      toast.error("❌ Số điện thoại phải có đúng 10 chữ số")
-      return
+    if (!/^[0-9]{10}$/.test(phone)) {
+      toast.error("Số điện thoại phải có đúng 10 chữ số");
+      return;
     }
 
-    // Kiểm tra độ dài mật khẩu (>= 6 ký tự)
     if (password.trim().length < 6) {
-      toast.error("❌ Mật khẩu phải có ít nhất 6 ký tự")
-      return
+      toast.error("Mật khẩu phải có ít nhất 6 ký tự");
+      return;
     }
 
-    // Kiểm tra xác nhận mật khẩu
     if (password !== confirm) {
-      toast.error("❌ Mật khẩu xác nhận không khớp")
-      return
+      toast.error("Mật khẩu xác nhận không khớp");
+      return;
     }
 
-    // Kiểm tra đồng ý điều khoản
     if (!agree) {
-      toast.error("❌ Bạn cần đồng ý với Điều khoản & Chính sách bảo mật")
-      return
+      toast.error("Bạn cần đồng ý với Điều khoản & Chính sách bảo mật");
+      return;
     }
 
-    // Thực hiện đăng ký
+    // Gọi API đăng ký thật qua Gateway
     try {
-      auth.register({ name, email, phone, password })
-      toast.success("🎉 Đăng ký thành công! Vui lòng đăng nhập.")
-      nav("/login")
+      const res = await userApi.register({
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      password: password.trim(),
+      role: "PATIENT",
+    });
+
+
+      if (res.status === 200 || res.status === 201) {
+        toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+        nav("/login");
+      } else {
+        toast.error("Có lỗi xảy ra, vui lòng thử lại sau.");
+      }
     } catch (err) {
-      toast.error(err.message)
+      console.error("Register error:", err);
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Đăng ký thất bại, vui lòng thử lại.";
+      toast.error("❌ " + message);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="max-w-5xl w-full bg-white rounded-2xl shadow-xl grid md:grid-cols-2 overflow-hidden">
-
         {/* Left side */}
         <div className="bg-teal-700 text-white flex flex-col justify-between p-10">
           <div>
             <div className="flex items-center gap-2 mb-8">
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                📅
+                📅Số
               </div>
               <span className="text-2xl font-semibold">MediBook</span>
             </div>
@@ -93,7 +105,7 @@ export default function Register() {
           </p>
 
           <form onSubmit={submit} className="space-y-5">
-            {/* Name */}
+            {/* Họ và tên */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Họ và tên
@@ -102,7 +114,7 @@ export default function Register() {
                 <User className="absolute left-3 top-2.5 text-slate-900" size={18} />
                 <input
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 
-                  focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
+                    focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Nguyễn Văn A"
@@ -121,7 +133,7 @@ export default function Register() {
                 <input
                   type="email"
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 
-                  focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
+                    focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="ten@email.com"
@@ -139,7 +151,7 @@ export default function Register() {
                 <Phone className="absolute left-3 top-2.5 text-slate-900" size={18} />
                 <input
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 
-                  focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
+                    focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="0912345678"
@@ -158,7 +170,7 @@ export default function Register() {
                 <input
                   type="password"
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 
-                  focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
+                    focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="******"
@@ -180,7 +192,7 @@ export default function Register() {
                 <input
                   type="password"
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 
-                  focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
+                    focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder="******"
@@ -213,11 +225,11 @@ export default function Register() {
             <button
               type="submit"
               disabled={!agree}
-              className={`w-full py-2.5 rounded-lg font-medium transition
-                ${agree
+              className={`w-full py-2.5 rounded-lg font-medium transition ${
+                agree
                   ? "bg-teal-700 text-white hover:bg-teal-800"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
+              }`}
             >
               Tạo tài khoản
             </button>
@@ -226,12 +238,15 @@ export default function Register() {
           {/* Login link */}
           <p className="mt-6 text-sm text-center text-slate-600">
             Đã có tài khoản?{" "}
-            <Link to="/login" className="text-teal-700 hover:underline font-semibold">
+            <Link
+              to="/login"
+              className="text-teal-700 hover:underline font-semibold"
+            >
               Đăng nhập
             </Link>
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

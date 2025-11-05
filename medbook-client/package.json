@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.0.1",
+    "axios": "^1.12.2",
     "clsx": "^2.1.1",
     "daisyui": "^5.1.24",
     "dayjs": "^1.11.13",

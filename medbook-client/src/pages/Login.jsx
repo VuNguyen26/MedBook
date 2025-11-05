@@ -1,40 +1,60 @@
-import { useState } from "react"
-import { useNavigate, useLocation, Link } from "react-router-dom"
-import { auth } from "../store/auth"
-import { Mail, Lock } from "lucide-react"
-import { toast } from "react-toastify"
+import { useState } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useAuth } from "../store/AuthContext";
+import userApi from "../api/userApi";
+import { Mail, Lock } from "lucide-react";
+import { toast } from "react-toastify";
 
 export default function Login() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const nav = useNavigate();
+  const location = useLocation();
+  const { login: setAuthUser } = useAuth(); // Lấy hàm login từ AuthContext
+  const from = location.state?.from?.pathname || "/";
 
-  const nav = useNavigate()
-  const location = useLocation()
-  const from = location.state?.from?.pathname || "/"
-
-  const submit = (e) => {
-    e.preventDefault()
+  const submit = async (e) => {
+    e.preventDefault();
 
     try {
-      const u = auth.login(email, password)
+      // Gọi API login qua Gateway
+      const res = await userApi.login({ email, password });
+      console.log("Login response:", res.data);
 
-      // Thông báo thành công
-      toast.success("🎉 Đăng nhập thành công!")
+      const token = res.data.token;
+      const role = res.data.role;
+      const message = res.data.message;
 
-      if (u.role === "patient") {
-        nav(from !== "/" ? from : "/", { replace: true })
-      } else {
-        nav(destByRole[u.role] || "/", { replace: true })
+      if (!token) {
+        toast.error("Không nhận được token từ server!");
+        return;
       }
+
+      // Lưu token + role + email vào localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
+      localStorage.setItem("email", email);
+
+      // Set user vào AuthContext
+      setAuthUser(token, { role, email });
+
+      toast.success("🎉 " + (message || "Đăng nhập thành công!"));
+
+      // Chuyển hướng về trang chủ
+      nav("/", { replace: true });
     } catch (err) {
-      toast.error(err.message) // chỉ hiển thị bằng toast
+      console.error("Login error:", err);
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Sai email hoặc mật khẩu!";
+      toast.error("❌ " + msg);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="max-w-5xl w-full bg-white rounded-2xl shadow-xl grid md:grid-cols-2 overflow-hidden">
-        
         {/* Left side */}
         <div className="bg-teal-700 text-white flex flex-col justify-between p-10">
           <div>
@@ -48,8 +68,8 @@ export default function Login() {
               Đặt lịch khám bệnh <br /> dễ dàng, nhanh chóng
             </h1>
             <p className="text-white/90">
-              Kết nối với các bác sĩ và cơ sở y tế uy tín. 
-              Quản lý lịch hẹn khám của bạn một cách thuận tiện.
+              Kết nối với các bác sĩ và cơ sở y tế uy tín. Quản lý lịch hẹn
+              khám của bạn một cách thuận tiện.
             </p>
           </div>
           <p className="text-xs text-white/70">
@@ -73,11 +93,14 @@ export default function Login() {
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-2.5 text-slate-900" size={18} />
+                <Mail
+                  className="absolute left-3 top-2.5 text-slate-900"
+                  size={18}
+                />
                 <input
                   type="email"
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 
-                  focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
+                    focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="ten@email.com"
@@ -92,16 +115,22 @@ export default function Login() {
                 <label className="block text-sm font-medium text-slate-700">
                   Mật khẩu
                 </label>
-                <Link to ="/forgot-password" className="text-sm text-teal-700 hover:underline">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-teal-700 hover:underline"
+                >
                   Quên mật khẩu?
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-2.5 text-slate-900" size={18} />
+                <Lock
+                  className="absolute left-3 top-2.5 text-slate-900"
+                  size={18}
+                />
                 <input
                   type="password"
                   className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 
-                  focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
+                    focus:ring-2 focus:ring-teal-600 focus:border-teal-600 focus:outline-none"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="******"
@@ -122,12 +151,15 @@ export default function Login() {
           {/* Register */}
           <p className="mt-6 text-sm text-center text-slate-600">
             Chưa có tài khoản?{" "}
-            <Link to="/register" className="text-teal-700 hover:underline font-semibold">
+            <Link
+              to="/register"
+              className="text-teal-700 hover:underline font-semibold"
+            >
               Đăng ký ngay
             </Link>
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }

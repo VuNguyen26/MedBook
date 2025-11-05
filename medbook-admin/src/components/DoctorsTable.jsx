@@ -136,10 +136,8 @@ export default function DoctorsTable({ filter }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [specialtyFilter, setSpecialtyFilter] = useState("All Specialties")
 
-  // ✅ Quản lý open dropdown cho từng bác sĩ
   const [openId, setOpenId] = useState(null)
 
-  // ✅ Quản lý open select filter
   const [openSelect, setOpenSelect] = useState(false)
   const triggerRef = useRef(null)
 

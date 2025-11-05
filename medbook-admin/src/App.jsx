@@ -27,6 +27,8 @@ import DoctorRecords from "./doctor/DoctorRecords"
 import RequireAdmin from "./components/routes/RequireAdmin"
 import RequireDoctor from "./components/routes/RequireDoctor"
 
+import TestApi from "./pages/TestApi";
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -36,6 +38,8 @@ export default function App() {
 
         {/* Login */}
         <Route path="/login" element={<Login />} />
+
+        <Route path="/test-api" element={<TestApi />} />
 
         {/* ================== ADMIN AREA ================== */}
         <Route element={<RequireAdmin />}>
@@ -61,7 +65,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
 
-      {/* ✅ ToastContainer hiển thị toàn app */}
+      {/* ToastContainer hiển thị toàn app */}
       <ToastContainer position="top-right" autoClose={2000} theme="colored" />
     </BrowserRouter>
   )
