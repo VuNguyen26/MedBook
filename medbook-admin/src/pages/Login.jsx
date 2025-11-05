@@ -1,37 +1,52 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Mail, Lock } from "lucide-react"
-import { auth } from "../store/auth"
-import { toast } from "react-toastify"   // ✅ Thêm dòng này
+import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
+import api from "../api/axios"
+import { useAuth } from "../store/AuthContext"
 
 export default function Login() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const navigate = useNavigate()
+  const { login } = useAuth()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const user = auth.login(email, password)
+      const res = await api.post("/api/auth/login", { email, password })
+      const { token, role, message } = res.data
 
-      toast.success("Đăng nhập thành công!")
-
-      if (user.role === "admin") {
-        navigate("/admin", { replace: true })
-      } else if (user.role === "doctor") {
-        navigate("/doctor/schedule", { replace: true })
+      if (!token) {
+        toast.error("Không nhận được token từ server!")
+        return
       }
+
+      // Lưu token + role + email
+      localStorage.setItem("token", token)
+      localStorage.setItem("role", role)
+      localStorage.setItem("email", email)
+
+      // Cập nhật vào context
+      login(token, { email, role })
+
+      toast.success("🎉 " + (message || "Đăng nhập thành công!"))
+
+      // Điều hướng theo vai trò
+      if (role === "ADMIN") navigate("/admin/dashboard", { replace: true })
+      else if (role === "DOCTOR") navigate("/doctor/schedule", { replace: true })
+      else toast.error("Bạn không có quyền truy cập hệ thống này.")
     } catch (err) {
-      toast.error(err.message || "Sai email hoặc mật khẩu")
+      console.error("Login error:", err)
+      const msg = err.response?.data?.message || "Sai email hoặc mật khẩu!"
+      toast.error("❌ " + msg)
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-400 via-purple-500 to-indigo-600 dark:from-pink-900 dark:via-purple-900 dark:to-indigo-900">
       <div className="bg-white dark:bg-gray-900 shadow-2xl rounded-3xl w-full max-w-md p-10 border-2 border-yellow-300">
-        
-        {/* Logo + tiêu đề */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-pink-600">
             Admin Panel
@@ -41,9 +56,7 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Form đăng nhập */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email */}
           <div>
             <label className="block text-sm font-bold text-pink-600 dark:text-pink-400">
               Email
@@ -61,7 +74,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Mật khẩu */}
           <div>
             <label className="block text-sm font-bold text-pink-600 dark:text-pink-400">
               Mật khẩu
@@ -79,7 +91,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Nút đăng nhập */}
           <button
             type="submit"
             className="w-full py-3 rounded-xl bg-gradient-to-r from-yellow-400 to-pink-500 text-white font-bold text-lg hover:from-yellow-500 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
@@ -88,7 +99,6 @@ export default function Login() {
           </button>
         </form>
 
-        {/* Footer */}
         <div className="mt-6 text-center">
           <a
             href="#"

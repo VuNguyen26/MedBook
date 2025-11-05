@@ -1,7 +1,7 @@
 export const API_ROUTES = {
   auth: {
-    login: "/users/login",
-    register: "/users/register",
+    login: "/api/auth/login",
+    register: "/api/auth/register",
   },
   doctor: {
     all: "/doctors",
