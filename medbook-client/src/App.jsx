@@ -31,8 +31,8 @@ import { AuthProvider } from "./store/AuthContext";
 export default function App() {
   const location = useLocation();
 
-  // Ẩn NavBar + Footer cho login/register
-  const hideLayout = ["/login", "/register"].includes(location.pathname);
+// Ẩn NavBar + Footer cho các trang auth
+  const hideLayout = ["/login", "/register", "/forgot-password", "/reset-password",].includes(location.pathname);
 
   return (
     <AuthProvider>

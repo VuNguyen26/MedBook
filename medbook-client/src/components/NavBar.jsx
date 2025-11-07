@@ -2,6 +2,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../store/AuthContext";
 import { useState } from "react";
 import { Menu, X, User } from "lucide-react";
+import { toast } from "react-toastify";
 
 export default function NavBar() {
   const [open, setOpen] = useState(false);
@@ -25,7 +26,13 @@ export default function NavBar() {
 
   const handleLogout = () => {
     logout();
-    nav("/login");
+    setDropdown(false);
+    nav("/");
+    toast.info("Bạn đã đăng xuất khỏi hệ thống!", {
+      theme: "colored",
+      autoClose: 3000,
+      pauseOnHover: false,
+    });
   };
 
   return (
@@ -45,7 +52,7 @@ export default function NavBar() {
           <div className="font-bold text-slate-900 text-lg">MedBook</div>
         </Link>
 
-        {/* Desktop nav */}
+        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6 text-sm">
           <NavLink to="/" className={linkClass} onClick={handleNavigate}>
             Trang chủ
@@ -61,7 +68,7 @@ export default function NavBar() {
           </NavLink>
         </nav>
 
-        {/* Actions */}
+        {/* User Actions */}
         <div className="hidden md:flex items-center gap-3 relative">
           {!user ? (
             <Link
@@ -75,12 +82,10 @@ export default function NavBar() {
             <div className="flex items-center gap-3 relative">
               <span className="text-sm text-slate-700">
                 Xin chào,{" "}
-                <b>
-                  {user.email?.split("@")[0] || "Người dùng"}
-                </b>
+                <b>{user.email?.split("@")[0] || "Người dùng"}</b>
               </span>
 
-              {/* Icon user */}
+              {/* Icon User */}
               <button
                 onClick={() => setDropdown(!dropdown)}
                 className="p-2 rounded-lg border border-slate-300 hover:bg-slate-100 transition"
@@ -103,7 +108,7 @@ export default function NavBar() {
           )}
         </div>
 
-        {/* Mobile toggle */}
+        {/* Mobile Menu Toggle */}
         <button
           className="md:hidden p-2 text-slate-700 hover:text-blue-600"
           onClick={() => setOpen(!open)}
@@ -112,7 +117,7 @@ export default function NavBar() {
         </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile Menu */}
       {open && (
         <div className="md:hidden border-t border-slate-200 bg-white px-6 py-4 space-y-2">
           <NavLink to="/" className={linkClass} onClick={handleNavigate}>

@@ -26,19 +26,21 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (token, userData) => {
-    // Lưu localStorage
+    // Lưu vào localStorage
     localStorage.setItem("token", token);
     if (userData.role) localStorage.setItem("role", userData.role);
     if (userData.email) localStorage.setItem("email", userData.email);
 
-    // Set state ngay
+    // Cập nhật state
     setUser({ token, ...userData });
   };
 
   const logout = () => {
-    localStorage.clear();
+    // Chỉ xóa dữ liệu, KHÔNG redirect
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("email");
     setUser(null);
-    window.location.href = "/login";
   };
 
   return (
