@@ -114,7 +114,7 @@ export default function Login() {
                 <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
                   <Stethoscope className="h-7 w-7" />
                 </div>
-                <span className="text-2xl font-bold tracking-tight">MediBook</span>
+                <span className="text-2xl font-bold tracking-tight">MedBook</span>
               </div>
 
               <h1 className="text-4xl font-extrabold leading-tight mb-4">
@@ -148,7 +148,7 @@ export default function Login() {
             </div>
 
             <p className="text-xs text-white/70 mt-12">
-              © 2025 MediBook. Bảo mật theo tiêu chuẩn HIPAA.
+              © 2025 MedBook. Bảo mật theo tiêu chuẩn HIPAA.
             </p>
           </div>
 

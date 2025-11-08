@@ -1,7 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../store/AuthContext";
 import { useState } from "react";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X, User, Stethoscope, LogOut, Calendar, Home } from "lucide-react";
 import { toast } from "react-toastify";
 
 export default function NavBar() {
@@ -38,17 +38,15 @@ export default function NavBar() {
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto flex items-center justify-between py-3 px-6">
-        {/* Logo */}
+        {/* Logo - SIÊU XỊN */}
         <Link
           to="/"
           onClick={handleNavigate}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 group"
         >
-          <img
-            src="/doctors/logo.png"
-            alt="MedBook Logo"
-            className="w-9 h-9 rounded-xl shadow object-cover"
-          />
+          <div className="p-2 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl shadow-md group-hover:shadow-lg transition-all duration-300">
+            <Stethoscope className="h-6 w-6 text-white" />
+          </div>
           <div className="font-bold text-slate-900 text-lg">MedBook</div>
         </Link>
 
@@ -68,40 +66,91 @@ export default function NavBar() {
           </NavLink>
         </nav>
 
-        {/* User Actions */}
-        <div className="hidden md:flex items-center gap-3 relative">
+        {/* User Actions - SIÊU HIỆN ĐẠI */}
+        <div className="hidden md:flex items-center gap-4 relative">
           {!user ? (
             <Link
               to="/login"
               onClick={handleNavigate}
-              className="px-5 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white font-medium transition"
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium rounded-xl shadow-md hover:shadow-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 transform hover:scale-105"
             >
               Đăng nhập
             </Link>
           ) : (
-            <div className="flex items-center gap-3 relative">
-              <span className="text-sm text-slate-700">
-                Xin chào,{" "}
-                <b>{user.email?.split("@")[0] || "Người dùng"}</b>
-              </span>
+            <div className="flex items-center gap-3">
+              {/* Tên người dùng + role */}
+              <div className="text-right hidden lg:block">
+                <p className="text-xs text-slate-500">Xin chào</p>
+                <p className="font-semibold text-slate-800 truncate max-w-32">
+                  {user.email?.split("@")[0] || "Người dùng"}
+                </p>
+              </div>
 
-              {/* Icon User */}
+              {/* Avatar + Dropdown Toggle */}
               <button
                 onClick={() => setDropdown(!dropdown)}
-                className="p-2 rounded-lg border border-slate-300 hover:bg-slate-100 transition"
+                className="relative p-1.5 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg hover:shadow-xl transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-blue-300"
               >
-                <User size={18} className="text-slate-700" />
+                <div className="p-2 bg-white rounded-full group-hover:scale-95 transition-transform">
+                  <User size={20} className="text-blue-600" />
+                </div>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-50 blur-md transition-opacity"></div>
               </button>
 
-              {/* Dropdown */}
+              {/* Dropdown Menu - SIÊU XỊN */}
               {dropdown && (
-                <div className="absolute right-0 top-10 w-36 bg-white border rounded-lg shadow-lg overflow-hidden z-50">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    Đăng xuất
-                  </button>
+                <div className="absolute right-0 top-14 w-52 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {/* Header */}
+                  <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-slate-100">
+                    <p className="text-xs font-medium text-slate-600">Tài khoản</p>
+                    <p className="text-sm font-semibold text-slate-800 truncate">{user.email}</p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      {user.role === "PATIENT" ? "Bệnh nhân" : "Bác sĩ"}
+                    </p>
+                  </div>
+
+                  {/* Menu Items */}
+                  <div className="py-2">
+                    {user.role === "PATIENT" && (
+                      <Link
+                        to="/patient"
+                        onClick={handleNavigate}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition"
+                      >
+                        <Calendar className="h-4 w-4" />
+                        Lịch hẹn của tôi
+                      </Link>
+                    )}
+                    {user.role === "DOCTOR" && (
+                      <Link
+                        to="/doctor"
+                        onClick={handleNavigate}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition"
+                      >
+                        <Stethoscope className="h-4 w-4" />
+                        Bảng điều khiển
+                      </Link>
+                    )}
+                    <Link
+                      to="/"
+                      onClick={handleNavigate}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition"
+                    >
+                      <Home className="h-4 w-4" />
+                      Trang chủ
+                    </Link>
+                  </div>
+
+                  {/* Logout - NỔI BẬT */}
+                  <div className="border-t border-slate-100 pt-2">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 group"
+                    >
+                      <LogOut className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                      Đăng xuất
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -110,16 +159,16 @@ export default function NavBar() {
 
         {/* Mobile Menu Toggle */}
         <button
-          className="md:hidden p-2 text-slate-700 hover:text-blue-600"
+          className="md:hidden p-2 text-slate-700 hover:text-blue-600 transition"
           onClick={() => setOpen(!open)}
         >
           {open ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - SIÊU ĐẸP */}
       {open && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-6 py-4 space-y-2">
+        <div className="md:hidden border-t border-slate-200 bg-white px-6 py-4 space-y-3">
           <NavLink to="/" className={linkClass} onClick={handleNavigate}>
             Trang chủ
           </NavLink>
@@ -133,22 +182,45 @@ export default function NavBar() {
             Liên hệ
           </NavLink>
 
-          <div className="pt-2">
+          <div className="pt-3 border-t border-slate-200">
             {!user ? (
               <Link
                 to="/login"
                 onClick={handleNavigate}
-                className="block w-full text-center px-4 py-2 rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition"
+                className="block w-full text-center px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium shadow-md hover:shadow-lg transition-all"
               >
                 Đăng nhập
               </Link>
             ) : (
-              <button
-                onClick={handleLogout}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 text-sm"
-              >
-                Đăng xuất
-              </button>
+              <>
+                <div className="text-sm text-slate-600 mb-2">
+                  Xin chào, <b>{user.email?.split("@")[0]}</b>
+                </div>
+                {user.role === "PATIENT" && (
+                  <Link
+                    to="/patient"
+                    onClick={handleNavigate}
+                    className="block w-full text-center px-4 py-2 rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 mb-2"
+                  >
+                    Lịch hẹn
+                  </Link>
+                )}
+                {user.role === "DOCTOR" && (
+                  <Link
+                    to="/doctor"
+                    onClick={handleNavigate}
+                    className="block w-full text-center px-4 py-2 rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 mb-2"
+                  >
+                    Bảng điều khiển
+                  </Link>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="w-full px-4 py-2.5 rounded-lg bg-red-50 text-red-600 font-medium hover:bg-red-100 transition"
+                >
+                  Đăng xuất
+                </button>
+              </>
             )}
           </div>
         </div>

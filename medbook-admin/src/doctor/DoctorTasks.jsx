@@ -1,8 +1,15 @@
+import { ClipboardList } from "lucide-react";
+
 export default function DoctorTasks() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-teal-700">Doctor Tasks</h1>
-      <p className="text-gray-600 mt-2">Danh sách công việc, ghi chú, nhiệm vụ...</p>
+    <div className="bg-white shadow-sm rounded-lg p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <ClipboardList className="text-teal-600" />
+        <h1 className="text-2xl font-bold text-teal-700">Công việc</h1>
+      </div>
+      <p className="text-gray-600">
+        Danh sách công việc, ghi chú và nhiệm vụ sẽ hiển thị tại đây.
+      </p>
     </div>
-  )
+  );
 }

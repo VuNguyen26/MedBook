@@ -10,7 +10,7 @@ import {
   Stethoscope, 
   Calendar, 
   ChevronRight,
-  Home // Thêm icon Home
+  Home
 } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -89,7 +89,7 @@ export default function Register() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center px-4 py-8 relative">
       <div className="w-full max-w-5xl relative">
 
-        {/* NÚT QUAY VỀ TRANG CHỦ - GÓC TRÊN BÊN PHẢI */}
+        {/* NÚT QUAY VỀ TRANG CHỦ */}
         <div className="absolute top-4 right-4 z-50">
           <Link
             to="/"
@@ -109,7 +109,7 @@ export default function Register() {
                 <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
                   <Stethoscope className="h-7 w-7" />
                 </div>
-                <span className="text-2xl font-bold tracking-tight">MediBook</span>
+                <span className="text-2xl font-bold tracking-tight">MedBook</span>
               </div>
 
               <h1 className="text-4xl font-extrabold leading-tight mb-4">
@@ -143,7 +143,7 @@ export default function Register() {
             </div>
 
             <p className="text-xs text-white/70 mt-12">
-              © 2025 MediBook. Bảo mật theo tiêu chuẩn HIPAA.
+              © 2025 MedBook. Bảo mật theo tiêu chuẩn HIPAA.
             </p>
           </div>
 
@@ -257,24 +257,35 @@ export default function Register() {
                   </div>
                 </div>
 
-                {/* Checkbox */}
+                {/* Checkbox - ĐÃ ĐƯỢC NÂNG CẤP CHUYÊN NGHIỆP */}
                 <div className="flex items-start gap-3">
                   <input
                     type="checkbox"
                     checked={agree}
                     onChange={(e) => setAgree(e.target.checked)}
-                    className="w-5 h-5 text-blue-600 border-2 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer transition"
+                    className="w-5 h-5 text-blue-600 border-2 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer transition mt-0.5"
                     disabled={loading}
                   />
-                  <label className="text-sm text-gray-600 leading-tight cursor-pointer">
+                  <label className="text-sm text-gray-600 leading-tight cursor-pointer select-none">
                     Tôi đồng ý với{" "}
-                    <a href="#" className="text-blue-600 hover:text-blue-700 font-medium underline">
+                    <a
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-blue-600 hover:text-blue-700 underline transition-colors"
+                    >
                       Điều khoản sử dụng
                     </a>{" "}
                     và{" "}
-                    <a href="#" className="text-blue-600 hover:text-blue-700 font-medium underline">
+                    <a
+                      href="/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-blue-600 hover:text-blue-700 underline transition-colors"
+                    >
                       Chính sách bảo mật
-                    </a>
+                    </a>{" "}
+                    của MedBook
                   </label>
                 </div>
 

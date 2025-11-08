@@ -24,6 +24,8 @@ import About from "./pages/About.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import TestApi from "./pages/TestApi.jsx";
+import TermsOfService from "./pages/TermsOfService.jsx";
+import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 
 // Context
 import { AuthProvider } from "./store/AuthContext";
@@ -31,13 +33,20 @@ import { AuthProvider } from "./store/AuthContext";
 export default function App() {
   const location = useLocation();
 
-// Ẩn NavBar + Footer cho các trang auth
-  const hideLayout = ["/login", "/register", "/forgot-password", "/reset-password",].includes(location.pathname);
+  // Ẩn NavBar + Footer cho các trang auth + trang pháp lý
+  const hideLayout = [
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
+    "/terms",
+    "/privacy"
+  ].includes(location.pathname);
 
   return (
     <AuthProvider>
       <div className="min-h-screen flex flex-col">
-        {/* NavBar (ẩn ở trang login/register) */}
+        {/* NavBar (ẩn ở các trang trên) */}
         {!hideLayout && <NavBar />}
 
         <ScrollToTop />
@@ -53,7 +62,11 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* Trang test kết nối API qua Gateway (chỉ khi đã login) */}
+            {/* Điều khoản & Bảo mật */}
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+
+            {/* Trang test API */}
             <Route
               path="/testapi"
               element={
@@ -63,7 +76,7 @@ export default function App() {
               }
             />
 
-            {/* Danh sách bác sĩ + chi tiết bác sĩ */}
+            {/* Danh sách bác sĩ */}
             <Route path="/specialties" element={<Specialties />} />
             <Route path="/doctors" element={<Doctors />} />
             <Route path="/doctors/:id" element={<DoctorDetail />} />
@@ -96,15 +109,15 @@ export default function App() {
               }
             />
 
-            {/* 404 Not Found */}
+            {/* 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
 
-        {/* Footer (ẩn ở trang login/register) */}
+        {/* Footer (ẩn ở các trang trên) */}
         {!hideLayout && <Footer />}
 
-        {/* Toast notifications */}
+        {/* Toast */}
         <ToastContainer
           position="top-right"
           autoClose={3000}

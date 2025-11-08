@@ -9,8 +9,8 @@ import {
   Activity,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { auth } from "@/store/auth"      // ✅ Thêm
-import { toast } from "react-toastify"   // ✅ Thêm
+import { auth } from "@/store/auth"
+import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 
 const navigation = [
@@ -26,7 +26,7 @@ export default function AdminSidebar() {
   const pathname = location.pathname
   const navigate = useNavigate()
 
-  // 🔹 Hàm đăng xuất
+  // Hàm đăng xuất
   const handleLogout = () => {
     auth.logout() // Xóa user khỏi localStorage
     toast.info("Đã đăng xuất khỏi hệ thống")
