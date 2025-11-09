@@ -1,134 +1,158 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// Components
-import NavBar from "./components/NavBar.jsx";
-import RequireAuth from "./components/RequireAuth.jsx";
-import ScrollToTop from "./components/ScrollToTop.jsx";
-import Footer from "./components/Footer.jsx";
+// ===== Components =====
+import NavBar from "@/components/NavBar.jsx";
+import ScrollToTop from "@/components/ScrollToTop.jsx";
+import Footer from "@/components/Footer.jsx";
+import RequireAuth from "@/components/RequireAuth.jsx";
+import RequireRole from "@/components/RequireRole.jsx";
 
-// Pages
-import Contact from "./pages/Contact.jsx";
-import Home from "./pages/Home.jsx";
-import Specialties from "./pages/Specialties.jsx";
-import Doctors from "./pages/Doctors.jsx";
-import DoctorDetail from "./pages/DoctorDetail.jsx";
-import Payment from "./pages/Payment.jsx";
-import Patient from "./pages/Patient.jsx";
-import DoctorBoard from "./pages/DoctorBoard.jsx";
-import Login from "./pages/Login.jsx";
-import NotFound from "./pages/NotFound.jsx";
-import Register from "./pages/Register.jsx";
-import About from "./pages/About.jsx";
-import ForgotPassword from "./pages/ForgotPassword.jsx";
-import ResetPassword from "./pages/ResetPassword.jsx";
-import TestApi from "./pages/TestApi.jsx";
-import TermsOfService from "./pages/TermsOfService.jsx";
-import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
+// ===== Layouts =====
+import AdminLayout from "@/layouts/AdminLayout.jsx";
+import DoctorLayout from "@/layouts/DoctorLayout.jsx";
 
-// Context
-import { AuthProvider } from "./store/AuthContext";
+// ===== Pages (Patient/Public) =====
+import Home from "@/pages/Home.jsx";
+import About from "@/pages/About.jsx";
+import Contact from "@/pages/Contact.jsx";
+import Specialties from "@/pages/Specialties.jsx";
+import Doctors from "@/pages/Doctors.jsx";
+import DoctorDetail from "@/pages/DoctorDetail.jsx";
+import Patient from "@/pages/Patient.jsx";
+import Payment from "@/pages/Payment.jsx";
+
+// ===== Pages (Auth) =====
+import Login from "@/pages/Login.jsx";
+import Register from "@/pages/Register.jsx";
+import ForgotPassword from "@/pages/ForgotPassword.jsx";
+import ResetPassword from "@/pages/ResetPassword.jsx";
+
+// ===== Pages (Legal) =====
+import TermsOfService from "@/pages/TermsOfService.jsx";
+import PrivacyPolicy from "@/pages/PrivacyPolicy.jsx";
+
+// ===== Pages (Admin) =====
+import Dashboard from "@/pages/admin/Dashboard.jsx";
+import AdminDoctors from "@/pages/admin/Doctors.jsx";
+import Reports from "@/pages/admin/Reports.jsx";
+import Users from "@/pages/admin/Users.jsx";
+import Payments from "@/pages/admin/Payments.jsx";
+
+// ===== Pages (Doctor) =====
+import DoctorSchedule from "@/pages/doctor/DoctorSchedule.jsx";
+import DoctorPatients from "@/pages/doctor/DoctorPatients.jsx";
+import DoctorRecords from "@/pages/doctor/DoctorRecords.jsx";
+import DoctorTasks from "@/pages/doctor/DoctorTasks.jsx";
+
+// ===== Misc Pages =====
+import NotFound from "@/pages/NotFound.jsx";
+import TestApi from "@/pages/TestApi.jsx";
 
 export default function App() {
   const location = useLocation();
 
-  // Ẩn NavBar + Footer cho các trang auth + trang pháp lý
-  const hideLayout = [
-    "/login",
-    "/register",
-    "/forgot-password",
-    "/reset-password",
-    "/terms",
-    "/privacy"
-  ].includes(location.pathname);
+  // Ẩn NavBar + Footer cho các trang auth, pháp lý, admin, doctor
+  const hideLayout =
+    [
+      "/login",
+      "/register",
+      "/forgot-password",
+      "/reset-password",
+      "/terms",
+      "/privacy",
+    ].includes(location.pathname) ||
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/doctor");
 
   return (
-    <AuthProvider>
-      <div className="min-h-screen flex flex-col">
-        {/* NavBar (ẩn ở các trang trên) */}
-        {!hideLayout && <NavBar />}
+    <div className="min-h-screen flex flex-col">
+      {!hideLayout && <NavBar />}
+      <ScrollToTop />
 
-        <ScrollToTop />
+      <main className="flex-1">
+        <Routes>
+          {/* ===================== PUBLIC ROUTES ===================== */}
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/specialties" element={<Specialties />} />
+          <Route path="/doctors" element={<Doctors />} />
+          <Route path="/doctors/:id" element={<DoctorDetail />} />
 
-        <main className="flex-1">
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+          {/* Auth routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
 
-            {/* Điều khoản & Bảo mật */}
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
+          {/* ===================== PATIENT ROUTES ===================== */}
+          <Route
+            path="/patient"
+            element={
+              <RequireAuth roles={["PATIENT"]}>
+                <Patient />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/payment/:appointmentId"
+            element={
+              <RequireAuth roles={["PATIENT"]}>
+                <Payment />
+              </RequireAuth>
+            }
+          />
 
-            {/* Trang test API */}
-            <Route
-              path="/testapi"
-              element={
-                <RequireAuth>
-                  <TestApi />
-                </RequireAuth>
-              }
-            />
+          {/* ===================== DOCTOR ROUTES ===================== */}
+          <Route element={<RequireRole allowedRoles={["DOCTOR"]} />}>
+            <Route path="/doctor" element={<DoctorLayout />}>
+              <Route path="schedule" element={<DoctorSchedule />} />
+              <Route path="patients" element={<DoctorPatients />} />
+              <Route path="records" element={<DoctorRecords />} />
+              <Route path="tasks" element={<DoctorTasks />} />
+            </Route>
+          </Route>
 
-            {/* Danh sách bác sĩ */}
-            <Route path="/specialties" element={<Specialties />} />
-            <Route path="/doctors" element={<Doctors />} />
-            <Route path="/doctors/:id" element={<DoctorDetail />} />
+          {/* ===================== ADMIN ROUTES ===================== */}
+          <Route element={<RequireRole allowedRoles={["ADMIN"]} />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="reports" element={<Reports />} />
+              <Route path="users" element={<Users />} />
+              <Route path="doctors" element={<AdminDoctors />} />
+              <Route path="payments" element={<Payments />} />
+            </Route>
+          </Route>
 
-            {/* Protected routes */}
-            <Route
-              path="/payment/:appointmentId"
-              element={
-                <RequireAuth roles={["PATIENT"]}>
-                  <Payment />
-                </RequireAuth>
-              }
-            />
+          {/* ===================== MISC ===================== */}
+          <Route
+            path="/testapi"
+            element={
+              <RequireAuth>
+                <TestApi />
+              </RequireAuth>
+            }
+          />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
 
-            <Route
-              path="/patient"
-              element={
-                <RequireAuth roles={["PATIENT"]}>
-                  <Patient />
-                </RequireAuth>
-              }
-            />
+      {!hideLayout && <Footer />}
 
-            <Route
-              path="/doctor"
-              element={
-                <RequireAuth roles={["DOCTOR"]}>
-                  <DoctorBoard />
-                </RequireAuth>
-              }
-            />
-
-            {/* 404 */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </main>
-
-        {/* Footer (ẩn ở các trang trên) */}
-        {!hideLayout && <Footer />}
-
-        {/* Toast */}
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          pauseOnHover
-          draggable
-          theme="colored"
-        />
-      </div>
-    </AuthProvider>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="colored"
+      />
+    </div>
   );
 }

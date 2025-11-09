@@ -1,12 +1,13 @@
-import { Navigate } from "react-router-dom"
-import { auth } from "../store/auth"
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../../store/AuthContext";
 
-export default function RequireAdmin({ children }) {
-  const user = auth.getCurrentUser()
-  
-  if (!user || user.role !== "admin") {
-    return <Navigate to="/login" />
-  }
+export default function RequireAdmin() {
+  const { user } = useAuth();
 
-  return children
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === "DOCTOR") return <Navigate to="/doctor/schedule" replace />;
+  if (user.role === "PATIENT") return <Navigate to="/" replace />;
+
+  // Hợp lệ (admin)
+  return <Outlet />;
 }

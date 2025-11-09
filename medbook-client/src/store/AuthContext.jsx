@@ -6,6 +6,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
+  // Khi load trang, đọc dữ liệu user từ localStorage
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
@@ -14,37 +15,60 @@ export const AuthProvider = ({ children }) => {
     if (token && role && email) {
       setUser({ token, role, email });
     } else if (token) {
-      // fallback: nếu chỉ có token thì gọi profile API
       userApi
         .getProfile()
-        .then((res) => setUser(res.data))
+        .then((res) => {
+          const userData = res.data;
+          if (userData.role) localStorage.setItem("role", userData.role);
+          if (userData.email) localStorage.setItem("email", userData.email);
+          setUser({ token, ...userData });
+        })
         .catch(() => {
-          localStorage.removeItem("token");
+          localStorage.clear();
           setUser(null);
         });
+    } else {
+      setUser(null);
     }
   }, []);
 
+  // Login: lưu thông tin và token vào localStorage
   const login = (token, userData) => {
-    // Lưu vào localStorage
+    if (!token) return;
     localStorage.setItem("token", token);
-    if (userData.role) localStorage.setItem("role", userData.role);
-    if (userData.email) localStorage.setItem("email", userData.email);
-
-    // Cập nhật state
+    if (userData?.role) localStorage.setItem("role", userData.role);
+    if (userData?.email) localStorage.setItem("email", userData.email);
     setUser({ token, ...userData });
   };
 
+  // Logout: chỉ xóa dữ liệu, KHÔNG điều hướng tại đây
   const logout = () => {
-    // Chỉ xóa dữ liệu, KHÔNG redirect
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("email");
-    setUser(null);
+    console.log("logout triggered");
+    try {
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      localStorage.removeItem("email");
+      sessionStorage.clear();
+      setUser(null);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
+  const isAuthenticated = !!user?.token;
+  const hasRole = (roles) => roles?.includes(user?.role);
+
   return (
-    <AuthContext.Provider value={{ user, setUser, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        setUser,
+        login,
+        logout,
+        isAuthenticated,
+        hasRole,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

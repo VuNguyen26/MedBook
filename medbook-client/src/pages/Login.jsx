@@ -1,15 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../store/AuthContext";
 import userApi from "../api/userApi";
-import {
-  Mail,
-  Lock,
-  LogIn,
-  Calendar,
-  Stethoscope,
-  Home, // Thêm icon Home
-} from "lucide-react";
+import { Mail, Lock, LogIn, Calendar, Stethoscope, Home } from "lucide-react";
 import { toast } from "react-toastify";
 
 export default function Login() {
@@ -19,82 +12,90 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { login: setAuthUser } = useAuth();
+  const { login: setAuthUser, user } = useAuth();
 
   const from = location.state?.from?.pathname || "/";
 
+  useEffect(() => {
+    if (!user) return;
+
+    if (user.role === "ADMIN") navigate("/admin/dashboard", { replace: true });
+    else if (user.role === "DOCTOR") navigate("/doctor/schedule", { replace: true });
+    else if (user.role === "PATIENT") navigate("/", { replace: true });
+  }, [user, navigate]);
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (loading) return;
-    setLoading(true);
+  e.preventDefault();
+  if (loading) return;
+  setLoading(true);
 
-    try {
-      const res = await userApi.login({ email, password });
-      const { token, role, message } = res.data;
+  try {
+    const res = await userApi.login({ email, password });
+    const { token, role } = res.data;
 
-      if (!token) {
-        toast.error("Không nhận được mã xác thực từ máy chủ!", {
-          theme: "colored",
-          autoClose: 4000,
-        });
-        return;
-      }
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("role", role);
-      localStorage.setItem("email", email);
-
-      setAuthUser(token, { role, email });
-
-      const successTranslations = {
-        "Login successful": "Đăng nhập thành công!",
-        "User created successfully": "Tạo tài khoản thành công!",
-      };
-
-      const translatedMsg =
-        successTranslations[message] || message || "Đăng nhập thành công!";
-
-      navigate(from, { replace: true });
-
-      setTimeout(() => {
-        toast.success("Đăng nhập thành công!", {
-          theme: "colored",
-          autoClose: 2500,
-          pauseOnHover: false,
-        });
-      }, 300);
-    } catch (err) {
-      console.error("Lỗi đăng nhập:", err);
-
-      let msg =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        "Email hoặc mật khẩu không chính xác!";
-
-      const translations = {
-        "Invalid email or password": "Email hoặc mật khẩu không chính xác!",
-        "User not found": "Không tìm thấy người dùng!",
-        "Password incorrect": "Mật khẩu không chính xác!",
-        "Account disabled": "Tài khoản của bạn đã bị vô hiệu hóa!",
-        "Access denied": "Bạn không có quyền truy cập!",
-      };
-      msg = translations[msg] || msg;
-
-      toast.error(msg, {
+    if (!token) {
+      toast.error("Không nhận được mã xác thực từ máy chủ!", {
         theme: "colored",
         autoClose: 4000,
-        pauseOnHover: true,
       });
-    } finally {
-      setLoading(false);
+      return;
     }
-  };
 
+    setAuthUser(token, { role, email });
+
+    let redirectPath = "/";
+    if (role === "ADMIN") redirectPath = "/admin/dashboard";
+    else if (role === "DOCTOR") redirectPath = "/doctor/schedule";
+    else redirectPath = from;
+
+    navigate(redirectPath, { replace: true });
+
+    let successMsg = "Đăng nhập thành công!";
+    if (role === "ADMIN") {
+      successMsg = "Đăng nhập với quyền quản trị viên thành công!";
+    } else if (role === "DOCTOR") {
+      successMsg = "Đăng nhập với quyền bác sĩ thành công!";
+    }
+
+    setTimeout(() => {
+      toast.success(successMsg, {
+        theme: "colored",
+        autoClose: 2500,
+        pauseOnHover: false,
+      });
+    }, 300);
+
+  } catch (err) {
+    console.error("Lỗi đăng nhập:", err);
+    let msg =
+      err.response?.data?.message ||
+      err.response?.data?.error ||
+      "Email hoặc mật khẩu không chính xác!";
+
+    const translations = {
+      "Invalid email or password": "Email hoặc mật khẩu không chính xác!",
+      "User not found": "Không tìm thấy người dùng!",
+      "Password incorrect": "Mật khẩu không chính xác!",
+      "Account disabled": "Tài khoản của bạn đã bị vô hiệu hóa!",
+      "Access denied": "Bạn không có quyền truy cập!",
+    };
+    msg = translations[msg] || msg;
+
+    toast.error(msg, {
+      theme: "colored",
+      autoClose: 4000,
+      pauseOnHover: true,
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // ==================== UI ====================
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center px-4 py-8 relative">
-      <div className="w-full max-w-5xl relative"> {/* relative để chứa nút tuyệt đối */}
-
-        {/* ===== NÚT QUAY VỀ TRANG CHỦ - GÓC TRÊN BÊN PHẢI ===== */}
+      <div className="w-full max-w-5xl relative">
+        {/* ===== NÚT QUAY VỀ TRANG CHỦ ===== */}
         <div className="absolute top-4 right-4 z-50">
           <Link
             to="/"
@@ -105,7 +106,7 @@ export default function Login() {
           </Link>
         </div>
 
-        {/* ===== Nội dung chính ===== */}
+        {/* ===== KHUNG LOGIN ===== */}
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden grid lg:grid-cols-2">
           {/* Bên trái: Hero */}
           <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-10 text-white flex flex-col justify-between">
@@ -114,7 +115,9 @@ export default function Login() {
                 <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
                   <Stethoscope className="h-7 w-7" />
                 </div>
-                <span className="text-2xl font-bold tracking-tight">MedBook</span>
+                <span className="text-2xl font-bold tracking-tight">
+                  MedBook
+                </span>
               </div>
 
               <h1 className="text-4xl font-extrabold leading-tight mb-4">
@@ -128,20 +131,18 @@ export default function Login() {
               </p>
 
               <div className="space-y-3">
-                {[
-                  { icon: Calendar, text: "Chọn khung giờ phù hợp" },
-                  { icon: Stethoscope, text: "Bác sĩ chuyên khoa hàng đầu" },
-                  { icon: "Check", text: "Nhận kết quả qua ứng dụng" },
-                ].map((item, i) => (
+                {[Calendar, Stethoscope, LogIn].map((Icon, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <div className="p-2 bg-white/20 rounded-xl">
-                      {typeof item.icon === "string" ? (
-                        <span className="text-lg">Check</span>
-                      ) : (
-                        <item.icon className="h-5 w-5" />
-                      )}
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <span className="font-medium">{item.text}</span>
+                    <span className="font-medium">
+                      {i === 0
+                        ? "Chọn khung giờ phù hợp"
+                        : i === 1
+                        ? "Bác sĩ chuyên khoa hàng đầu"
+                        : "Nhận kết quả qua ứng dụng"}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -213,16 +214,7 @@ export default function Login() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
                     >
-                      {showPassword ? (
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-.685.065-1.353.19-2M4.22 4.22l15.56 15.56M9.88 9.88A3 3 0 0115 15M9.88 9.88L9 9m12.71 4.29A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-.685.065-1.353.19-2" />
-                        </svg>
-                      ) : (
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      )}
+                      {showPassword ? "Ẩn" : "👁"}
                     </button>
                   </div>
                 </div>
