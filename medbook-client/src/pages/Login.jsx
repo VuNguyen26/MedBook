@@ -25,71 +25,67 @@ export default function Login() {
   }, [user, navigate]);
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (loading) return;
-  setLoading(true);
+    e.preventDefault();
+    if (loading) return;
+    setLoading(true);
 
-  try {
-    const res = await userApi.login({ email, password });
-    const { token, role } = res.data;
+    try {
+      const res = await userApi.login({ email, password });
+      const { token, role } = res.data;
 
-    if (!token) {
-      toast.error("Không nhận được mã xác thực từ máy chủ!", {
+      if (!token) {
+        toast.error("Không nhận được mã xác thực từ máy chủ!", {
+          theme: "colored",
+          autoClose: 4000,
+        });
+        return;
+      }
+
+      setAuthUser(token, { role, email });
+
+      let redirectPath = "/";
+      if (role === "ADMIN") redirectPath = "/admin/dashboard";
+      else if (role === "DOCTOR") redirectPath = "/doctor/schedule";
+      else redirectPath = from;
+
+      navigate(redirectPath, { replace: true });
+
+      let successMsg = "Đăng nhập thành công!";
+      if (role === "ADMIN") successMsg = "Đăng nhập với quyền quản trị viên thành công!";
+      else if (role === "DOCTOR") successMsg = "Đăng nhập với quyền bác sĩ thành công!";
+
+      setTimeout(() => {
+        toast.success(successMsg, {
+          theme: "colored",
+          autoClose: 2500,
+          pauseOnHover: false,
+        });
+      }, 300);
+    } catch (err) {
+      console.error("Lỗi đăng nhập:", err);
+      let msg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Email hoặc mật khẩu không chính xác!";
+
+      const translations = {
+        "Invalid email or password": "Email hoặc mật khẩu không chính xác!",
+        "User not found": "Không tìm thấy người dùng!",
+        "Password incorrect": "Mật khẩu không chính xác!",
+        "Account disabled": "Tài khoản của bạn đã bị vô hiệu hóa!",
+        "Access denied": "Bạn không có quyền truy cập!",
+      };
+      msg = translations[msg] || msg;
+
+      toast.error(msg, {
         theme: "colored",
         autoClose: 4000,
+        pauseOnHover: true,
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    setAuthUser(token, { role, email });
-
-    let redirectPath = "/";
-    if (role === "ADMIN") redirectPath = "/admin/dashboard";
-    else if (role === "DOCTOR") redirectPath = "/doctor/schedule";
-    else redirectPath = from;
-
-    navigate(redirectPath, { replace: true });
-
-    let successMsg = "Đăng nhập thành công!";
-    if (role === "ADMIN") {
-      successMsg = "Đăng nhập với quyền quản trị viên thành công!";
-    } else if (role === "DOCTOR") {
-      successMsg = "Đăng nhập với quyền bác sĩ thành công!";
-    }
-
-    setTimeout(() => {
-      toast.success(successMsg, {
-        theme: "colored",
-        autoClose: 2500,
-        pauseOnHover: false,
-      });
-    }, 300);
-
-  } catch (err) {
-    console.error("Lỗi đăng nhập:", err);
-    let msg =
-      err.response?.data?.message ||
-      err.response?.data?.error ||
-      "Email hoặc mật khẩu không chính xác!";
-
-    const translations = {
-      "Invalid email or password": "Email hoặc mật khẩu không chính xác!",
-      "User not found": "Không tìm thấy người dùng!",
-      "Password incorrect": "Mật khẩu không chính xác!",
-      "Account disabled": "Tài khoản của bạn đã bị vô hiệu hóa!",
-      "Access denied": "Bạn không có quyền truy cập!",
-    };
-    msg = translations[msg] || msg;
-
-    toast.error(msg, {
-      theme: "colored",
-      autoClose: 4000,
-      pauseOnHover: true,
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // ==================== UI ====================
   return (
@@ -115,14 +111,11 @@ export default function Login() {
                 <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
                   <Stethoscope className="h-7 w-7" />
                 </div>
-                <span className="text-2xl font-bold tracking-tight">
-                  MedBook
-                </span>
+                <span className="text-2xl font-bold tracking-tight">MedBook</span>
               </div>
 
               <h1 className="text-4xl font-extrabold leading-tight mb-4">
-                Đặt lịch khám
-                <br />
+                Đặt lịch khám <br />
                 <span className="text-yellow-300">chỉ trong 30 giây</span>
               </h1>
 
@@ -157,9 +150,7 @@ export default function Login() {
           <div className="p-8 lg:p-12 flex flex-col justify-center bg-white">
             <div className="max-w-md mx-auto w-full">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-900">
-                  Chào mừng trở lại
-                </h2>
+                <h2 className="text-3xl font-bold text-gray-900">Chào mừng trở lại</h2>
                 <p className="mt-2 text-sm text-gray-600">
                   Đăng nhập để tiếp tục quản lý sức khỏe
                 </p>
@@ -242,6 +233,43 @@ export default function Login() {
                   )}
                 </button>
               </form>
+
+              {/* ========== OAuth2 Buttons ========== */}
+              <div className="my-6 flex items-center">
+                <div className="flex-grow h-px bg-gray-200"></div>
+                <span className="px-4 text-sm text-gray-500">
+                  Hoặc đăng nhập bằng
+                </span>
+                <div className="flex-grow h-px bg-gray-200"></div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Google Login */}
+                <a
+                  href="http://localhost:8080/oauth2/authorization/google"
+                  className="flex items-center justify-center gap-2 w-full py-3.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-200 shadow-sm"
+                >
+                  <img
+                    src="https://www.svgrepo.com/show/475656/google-color.svg"
+                    alt="Google"
+                    className="w-5 h-5"
+                  />
+                  <span>Google</span>
+                </a>
+
+                {/* Facebook Login */}
+                <a
+                  href="http://localhost:8080/oauth2/authorization/facebook"
+                  className="flex items-center justify-center gap-2 w-full py-3.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-200 shadow-sm"
+                >
+                  <img
+                    src="https://www.svgrepo.com/show/448224/facebook.svg"
+                    alt="Facebook"
+                    className="w-5 h-5"
+                  />
+                  <span>Facebook</span>
+                </a>
+              </div>
 
               <p className="mt-8 text-center text-sm text-gray-600">
                 Chưa có tài khoản?{" "}

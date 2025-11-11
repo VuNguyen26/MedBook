@@ -28,6 +28,7 @@ import Login from "@/pages/Login.jsx";
 import Register from "@/pages/Register.jsx";
 import ForgotPassword from "@/pages/ForgotPassword.jsx";
 import ResetPassword from "@/pages/ResetPassword.jsx";
+import LoginSuccess from "@/pages/LoginSuccess.jsx";
 
 // ===== Pages (Legal) =====
 import TermsOfService from "@/pages/TermsOfService.jsx";
@@ -53,10 +54,11 @@ import TestApi from "@/pages/TestApi.jsx";
 export default function App() {
   const location = useLocation();
 
-  // Ẩn NavBar + Footer cho các trang auth, pháp lý, admin, doctor
+  // Ẩn NavBar + Footer cho các trang auth, pháp lý, admin, doctor, login success
   const hideLayout =
     [
       "/login",
+      "/login/success",
       "/register",
       "/forgot-password",
       "/reset-password",
@@ -81,8 +83,9 @@ export default function App() {
           <Route path="/doctors" element={<Doctors />} />
           <Route path="/doctors/:id" element={<DoctorDetail />} />
 
-          {/* Auth routes */}
+          {/* ===================== AUTH ROUTES ===================== */}
           <Route path="/login" element={<Login />} />
+          <Route path="/login/success" element={<LoginSuccess />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
