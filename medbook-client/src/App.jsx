@@ -65,8 +65,7 @@ export default function App() {
       "/terms",
       "/privacy",
     ].includes(location.pathname) ||
-    location.pathname.startsWith("/admin") ||
-    location.pathname.startsWith("/doctor");
+    location.pathname.startsWith("/admin")
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -74,7 +73,7 @@ export default function App() {
       <ScrollToTop />
 
       <main className="flex-1">
-        <Routes>
+        <Routes>cd medbook
           {/* ===================== PUBLIC ROUTES ===================== */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import dayjs from "dayjs"
 import { api } from "../store/api.js"
@@ -9,25 +9,44 @@ export default function DoctorDetail() {
   const navigate = useNavigate()
   const user = auth.getCurrentUser()
 
-  // Lấy thông tin bác sĩ
-  const doctor = api.getDoctors().find((d) => String(d.id) === String(id))
-  if (!doctor) {
+  // -----------------------------
+  // 🔥 Load doctor từ backend
+  // -----------------------------
+  const [doctor, setDoctor] = useState(null)
+
+  useEffect(() => {
+    const load = async () => {
+      const all = await api.getDoctors()
+      const found = all.find((d) => String(d.id) === String(id))
+      setDoctor(found || null)
+    }
+    load()
+  }, [id])
+
+  if (doctor === null)
+    return <div className="container-page py-8 text-slate-600">Đang tải...</div>
+
+  if (!doctor)
     return (
       <div className="container-page py-8 text-red-600 font-semibold">
         ❌ Không tìm thấy bác sĩ.
       </div>
     )
-  }
 
-  // Dịch vụ
+  // -----------------------------
+  // Dịch vụ (mock)
+  // -----------------------------
   const services = api.getServices() || []
   const [serviceId, setServiceId] = useState(services[0]?.id || null)
+
   const service = useMemo(
     () => services.find((s) => String(s.id) === String(serviceId)),
     [serviceId, services]
   )
 
+  // -----------------------------
   // Tabs ngày
+  // -----------------------------
   const today = dayjs()
   const days = [
     { key: "today", label: "Hôm nay", date: today },
@@ -37,8 +56,11 @@ export default function DoctorDetail() {
   ]
   const [tab, setTab] = useState("today")
 
-  // Lịch theo ngày được chọn
   const [date, setDate] = useState(today.format("YYYY-MM-DD"))
+
+  // -----------------------------
+  // Lịch mock từ FE (chưa có backend)
+  // -----------------------------
   const slots =
     api.getDoctorSlots({
       doctor_id: id,
@@ -49,21 +71,22 @@ export default function DoctorDetail() {
   const morningSlots = slots.filter((s) => dayjs(s.start_at).hour() < 12)
   const eveningSlots = slots.filter((s) => dayjs(s.start_at).hour() >= 12)
 
-  // Slot đã chọn
   const [selectedSlot, setSelectedSlot] = useState(null)
 
+  // -----------------------------
   // Đặt lịch
+  // -----------------------------
   const handleBook = () => {
     if (!user || user.role !== "patient") {
       navigate("/login", { state: { from: `/doctors/${id}` } })
       return
     }
+
     if (!serviceId || !selectedSlot) {
       alert("❌ Vui lòng chọn dịch vụ và khung giờ.")
       return
     }
 
-    // Tạo appointment
     const appt = api.createAppointment({
       patient_id: user.id,
       doctor_id: id,
@@ -86,30 +109,31 @@ export default function DoctorDetail() {
     }
   }
 
-  // Helper
-  const specialty = api.getSpecialties().find((s) => s.id === doctor.specialty_id)?.name
-  const clinic = api.getClinicLocations().find((c) => c.id === doctor.clinic_location_id)?.name
-
   return (
     <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
       {/* Bên trái - thông tin bác sĩ */}
       <div className="lg:col-span-2 space-y-6">
         <div className="bg-white rounded-xl shadow p-6 flex flex-col sm:flex-row gap-6">
           <img
-            src={doctor.image || "/default-doctor.png"}
+            src={doctor.imageUrl || "/default-doctor.png"}
             alt={doctor.name}
             className="w-32 h-32 rounded-full object-cover border shadow"
           />
+
           <div className="flex-1 space-y-2 text-slate-800">
             <h1 className="text-2xl font-bold text-blue-800">
               {doctor.title} {doctor.name}
             </h1>
-            <p>{doctor.bio}</p>
-            <p>Kinh nghiệm: <b className="text-blue-800">{doctor.experience_years}+ năm</b></p>
-            <p>Ngôn ngữ: <b className="text-blue-800">Tiếng Việt, Tiếng Anh</b></p>
-            <p>Chuyên khoa: <b>{specialty}</b></p>
-            <p>Địa điểm: <b>{clinic}</b></p>
-            <p>Đánh giá Google: <b className="text-yellow-600">0.0 ⭐</b></p>
+
+            <p>Kinh nghiệm: <b className="text-blue-800">{doctor.experience} năm</b></p>
+
+            <p>Chuyên khoa: <b>{doctor.specialty || "Chưa cập nhật"}</b></p>
+
+            <p>Đánh giá: <b className="text-yellow-600">{doctor.rating || 0} ⭐</b></p>
+
+            <p>Điện thoại: <b>{doctor.phone}</b></p>
+            <p>Email: <b>{doctor.email}</b></p>
           </div>
         </div>
 
@@ -127,13 +151,15 @@ export default function DoctorDetail() {
         </div>
       </div>
 
-      {/* Bên phải - Đặt lịch hẹn */}
+      {/* Bên phải - đặt lịch */}
       <div className="bg-white rounded-xl shadow p-6 space-y-4 text-slate-800">
+
         <h2 className="text-lg font-bold text-blue-800">Đặt lịch khám</h2>
+
         <p>
           Phí khám:{" "}
           <b className="text-blue-800">
-            {service?.fee?.toLocaleString() || doctor.fee?.toLocaleString()}đ
+            {(service?.fee || doctor.fee || 0).toLocaleString()}đ
           </b>
         </p>
 
@@ -171,7 +197,9 @@ export default function DoctorDetail() {
 
         {/* Buổi sáng */}
         <div>
-          <h3 className="font-semibold mb-2">Buổi sáng ({morningSlots.length} khung giờ)</h3>
+          <h3 className="font-semibold mb-2">
+            Buổi sáng ({morningSlots.length} khung giờ)
+          </h3>
           {morningSlots.length === 0 ? (
             <p className="text-slate-600 text-sm">Không có lịch trống.</p>
           ) : (
@@ -195,7 +223,9 @@ export default function DoctorDetail() {
 
         {/* Buổi chiều */}
         <div>
-          <h3 className="font-semibold mb-2">Buổi chiều ({eveningSlots.length} khung giờ)</h3>
+          <h3 className="font-semibold mb-2">
+            Buổi chiều ({eveningSlots.length} khung giờ)
+          </h3>
           {eveningSlots.length === 0 ? (
             <p className="text-slate-600 text-sm">Không có lịch trống.</p>
           ) : (

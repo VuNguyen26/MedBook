@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom"
-import { api } from "../store/api.js"
+import { useEffect, useState } from "react"
+import axios from "axios"
 
 export default function Home() {
-  const doctors = api.getDoctors().slice(0, 10)
-  const allSpecs = api.getSpecialties()
+  const [doctors, setDoctors] = useState([])
+  const [allSpecs, setAllSpecs] = useState([])
 
-  // 🔹 Mapping icon chuyên khoa
+  // 🔹 icon chuyên khoa
   const specIcons = {
     1: "/doctors/dk.png",
     2: "/doctors/pk.png",
@@ -14,6 +15,21 @@ export default function Home() {
     5: "/doctors/tk.png",
     6: "/doctors/th.png",
   }
+
+  useEffect(() => {
+    // Load doctors từ BE
+    axios.get("http://localhost:8080/api/doctors")
+      .then((res) => {
+        console.log("Doctors from backend:", res.data)
+        setDoctors(res.data)
+      })
+      .catch((err) => console.error(err))
+
+    // Load specialties nếu có API
+    axios.get("http://localhost:8080/api/specialties")
+      .then((res) => setAllSpecs(res.data))
+      .catch(() => setAllSpecs([]))
+  }, [])
 
   return (
     <div className="space-y-16">
