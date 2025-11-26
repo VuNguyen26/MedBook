@@ -22,6 +22,9 @@ import Doctors from "@/pages/Doctors.jsx";
 import DoctorDetail from "@/pages/DoctorDetail.jsx";
 import Patient from "@/pages/Patient.jsx";
 import Payment from "@/pages/Payment.jsx";
+import PaymentSuccess from "@/pages/PaymentSuccess.jsx";
+import FakeGateway from "@/pages/FakeGateway.jsx";
+import PaymentFail from "./pages/PaymentFail.jsx";
 
 // ===== Pages (Auth) =====
 import Login from "@/pages/Login.jsx";
@@ -81,6 +84,10 @@ export default function App() {
           <Route path="/specialties" element={<Specialties />} />
           <Route path="/doctors" element={<Doctors />} />
           <Route path="/doctors/:id" element={<DoctorDetail />} />
+          <Route path="/payment-success/:appointmentId" element={<PaymentSuccess />}/>
+          <Route path="/fake-gateway" element={<FakeGateway />} />
+          <Route path="/payment-fail/:appointmentId" element={<PaymentFail />} />
+
 
           {/* ===================== AUTH ROUTES ===================== */}
           <Route path="/login" element={<Login />} />

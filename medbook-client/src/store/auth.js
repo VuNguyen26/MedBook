@@ -1,24 +1,44 @@
-export const auth = {
+// store/auth.js
 
+export const auth = {
+  // ============================
+  // 1) Local demo (optional)
+  // ============================
   initDefaultUsers() {
-    let users = JSON.parse(localStorage.getItem("users") || "[]")
+
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
 
     if (users.length === 0) {
       users = [
-        { id: 1, name: "Doctor Test", email: "doctor@example.com", phone: "111", password: "123", role: "doctor" },
-        { id: 2, name: "Patient Test", email: "user@example.com", phone: "222", password: "123", role: "patient" }
-      ]
-      localStorage.setItem("users", JSON.stringify(users))
+        {
+          id: 1,
+          name: "Doctor Test",
+          email: "doctor@example.com",
+          phone: "111",
+          password: "123",
+          role: "doctor",
+        },
+        {
+          id: 2,
+          name: "Patient Test",
+          email: "user@example.com",
+          phone: "222",
+          password: "123",
+          role: "patient",
+        },
+      ];
+      localStorage.setItem("users", JSON.stringify(users));
     }
   },
 
-  // Đăng ký tài khoản mới
+  // ============================
+  // 2) Local login (DEMO ONLY)
+  // ============================
   register({ name, email, phone, password, role = "patient" }) {
-    let users = JSON.parse(localStorage.getItem("users") || "[]")
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
 
-    // Kiểm tra trùng email
-    if (users.find(u => u.email === email)) {
-      throw new Error("❌ Email đã tồn tại")
+    if (users.find((u) => u.email === email)) {
+      throw new Error("❌ Email đã tồn tại");
     }
 
     const newUser = {
@@ -26,45 +46,73 @@ export const auth = {
       name,
       email,
       phone,
-      password, // demo chưa mã hoá
-      role
-    }
+      password,
+      role,
+    };
 
-    users.push(newUser)
-    localStorage.setItem("users", JSON.stringify(users))
-    localStorage.setItem("currentUser", JSON.stringify(newUser))
+    users.push(newUser);
+    localStorage.setItem("users", JSON.stringify(users));
+    localStorage.setItem("currentUser", JSON.stringify(newUser));
 
-    return newUser
+    return newUser;
   },
 
-  // Đăng nhập
   login(email, password) {
-    let users = JSON.parse(localStorage.getItem("users") || "[]")
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
     const user = users.find(
-      u => u.email === email && u.password === password
-    )
-    if (!user) {
-      throw new Error("❌ Sai email hoặc mật khẩu")
-    }
-    localStorage.setItem("currentUser", JSON.stringify(user))
-    return user
+      (u) => u.email === email && u.password === password
+    );
+
+    if (!user) throw new Error("❌ Sai email hoặc mật khẩu");
+
+    localStorage.setItem("currentUser", JSON.stringify(user));
+    return user;
   },
 
-  // Lấy user hiện tại
+  // ============================
+  // 3) JWT Login (REAL BACKEND)
+  // ============================
   getCurrentUser() {
-    return JSON.parse(localStorage.getItem("currentUser") || "null")
+    // Nếu còn currentUser cũ thì ưu tiên (chỉ để demo, không dùng production)
+    const current = localStorage.getItem("currentUser");
+    if (current) {
+      try {
+        return JSON.parse(current);
+      } catch {}
+    }
+
+    // Flow mới: JWT từ backend
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1])); // decode JWT
+
+      return {
+        id: payload.id,                                // id thật từ backend
+        name: payload.sub || payload.email || "User",
+        email: payload.sub || "",
+        role: payload.role || "PATIENT",
+      };
+    } catch (err) {
+      console.error("Lỗi decode JWT:", err);
+      return null;
+    }
   },
 
-  // Kiểm tra có đăng nhập hay chưa
   isLoggedIn() {
-    return !!localStorage.getItem("currentUser")
+    return (
+      !!localStorage.getItem("currentUser") || !!localStorage.getItem("token")
+    );
   },
 
-  // Đăng xuất
   logout() {
-    localStorage.removeItem("currentUser")
-  }
-}
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("token");
+    localStorage.removeItem("email");
+    localStorage.removeItem("role");
+  },
+};
 
-// ⚡ Gọi init mặc định khi load app
-auth.initDefaultUsers()
+// Gọi init local demo
+auth.initDefaultUsers();

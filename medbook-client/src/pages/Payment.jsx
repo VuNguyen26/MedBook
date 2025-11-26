@@ -1,285 +1,285 @@
-import { useState } from "react"
-import { useLocation, useParams } from "react-router-dom"
-import { toast } from "react-toastify"
-import { CreditCard, Smartphone, Wallet, Globe } from "lucide-react"
+import { useState } from "react";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { toast } from "react-toastify";
+import {
+  User,
+  Phone,
+  Calendar,
+  MapPin,
+  Mail,
+  Stethoscope,
+  Clock,
+  CreditCard,
+  ShieldCheck,
+  ChevronRight,
+  HeartPulse,
+} from "lucide-react";
 
 export default function Payment() {
-  const { appointmentId } = useParams()
-  const location = useLocation()
-  const { doctor, service, date, time, fee } = location.state || {}
+  const { appointmentId } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const [agree, setAgree] = useState(false)
-  const [method, setMethod] = useState("momo")
+  let { doctor, service, date, time, fee, total: totalFromState } =
+    location.state || {};
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (!agree) {
-      toast.error("❌ Bạn cần đồng ý với điều khoản trước khi thanh toán")
-      return
-    }
-    toast.success(`✅ Thanh toán thành công cho lịch hẹn #${appointmentId}`)
+  if (!location.state) {
+    navigate("/");
+    return null;
   }
 
-  // phí dịch vụ và giảm giá mẫu
-  const serviceFee = 20000
-  const discount = 50000
-  const total = (fee || 0) + serviceFee - discount
+  const serviceFee = 20000;
+  const discount = 50000;
+
+  if (!fee && totalFromState !== undefined) {
+    fee = totalFromState + discount - serviceFee;
+  }
+
+  const total = (fee || 0) + serviceFee - discount;
+
+  const [agree, setAgree] = useState(false);
+
+  const handlePayment = async (e) => {
+    e.preventDefault();
+    if (!agree) {
+      toast.error("Bạn cần đồng ý với điều khoản trước khi thanh toán");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const payload = {
+        appointmentId: Number(appointmentId),
+        amount: total,
+        success: true,
+      };
+
+      const res = await axios.post(
+        "http://localhost:8080/api/payments/fake",
+        payload,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+
+      const data = res.data;
+      if (!data || !data.payUrl) {
+        toast.error("Không tạo được giao dịch thanh toán");
+        return;
+      }
+
+      const bookingState = { appointmentId: Number(appointmentId), doctor, service, date, time, fee, total };
+      const encoded = encodeURIComponent(JSON.stringify(bookingState));
+      window.location.href = `${data.payUrl}&state=${encoded}`;
+    } catch (err) {
+      toast.error("Thanh toán thất bại, vui lòng thử lại!");
+    }
+  };
 
   return (
-    <div className="bg-gray-50 min-h-screen py-10">
-      <div className="max-w-6xl mx-auto px-4">
-        <h1 className="text-3xl font-bold mb-2 text-black">
-          Thanh toán đặt lịch khám
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Hoàn tất thanh toán để xác nhận lịch hẹn của bạn
-        </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-cyan-600 to-blue-700 text-white py-8 shadow-lg">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex items-center gap-4">
+            <HeartPulse className="w-10 h-10" />
+            <div>
+              <h1 className="text-3xl font-bold">Thanh toán đặt lịch khám bệnh</h1>
+              <p className="text-cyan-100 mt-1">Vui lòng kiểm tra thông tin và hoàn tất thanh toán an toàn</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="grid md:grid-cols-3 gap-6 items-start"
-        >
-          {/* Cột trái */}
-          <div className="md:col-span-2 space-y-6">
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        <form onSubmit={handlePayment} className="grid lg:grid-cols-3 gap-8">
+
+          {/* ==================== LEFT COLUMN ==================== */}
+          <div className="lg:col-span-2 space-y-8">
+
             {/* 1. Thông tin bệnh nhân */}
-            <div className="bg-white rounded-xl shadow p-6 space-y-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2 text-black">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-white text-sm">
-                  1
-                </span>
-                Thông tin bệnh nhân
-              </h2>
+            <div className="bg-white rounded-2xl shadow-lg border border-cyan-100 overflow-hidden">
+              <div className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 flex items-center gap-3">
+                <div className="bg-white/20 rounded-full p-2">
+                  <User className="w-6 h-6" />
+                </div>
+                <h2 className="text-xl font-semibold">Thông tin bệnh nhân</h2>
+              </div>
+              <div className="p-8 space-y-6">
+                <div className="grid md:grid-cols-2 gap-5">
+                  <div className="relative">
+                    <User className="absolute left-4 top-4 text-cyan-600 w-5 h-5" />
+                    <input
+                      defaultValue="Nguyễn Văn A"
+                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition"
+                      placeholder="Họ và tên"
+                      required
+                    />
+                  </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Họ và tên *
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="Nguyễn Văn A"
-                    required
-                    className="mt-1 w-full border border-gray-300 bg-white text-black rounded-lg px-3 py-2 
-                               focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Số điện thoại *
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="0912345678"
-                    required
-                    className="mt-1 w-full border border-gray-300 bg-white text-black rounded-lg px-3 py-2 
-                               focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="email@example.com"
-                    className="mt-1 w-full border border-gray-300 bg-white text-black rounded-lg px-3 py-2 
-                               focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Ngày sinh *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    className="mt-1 w-full border border-gray-300 bg-white text-black rounded-lg px-3 py-2 
-                               focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Địa chỉ
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
-                    className="mt-1 w-full border border-gray-300 bg-white text-black rounded-lg px-3 py-2 
-                               focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-4 text-cyan-600 w-5 h-5" />
+                    <input
+                      defaultValue="0912345678"
+                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition"
+                      placeholder="Số điện thoại"
+                      required
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-4 text-cyan-600 w-5 h-5" />
+                    <input
+                      type="email"
+                      placeholder="email@example.com"
+                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition"
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-4 text-cyan-600 w-5 h-5" />
+                    <input
+                      type="date"
+                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition"
+                      required
+                    />
+                  </div>
+
+                  <div className="relative md:col-span-2">
+                    <MapPin className="absolute left-4 top-12 text-cyan-600 w-5 h-5" />
+                    <textarea
+                      rows={2}
+                      placeholder="Địa chỉ (không bắt buộc)"
+                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition resize-none"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* 2. Chi tiết lịch hẹn */}
-            <div className="bg-white rounded-xl shadow p-6 space-y-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2 text-black">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-white text-sm">
-                  2
-                </span>
-                Chi tiết lịch hẹn
-              </h2>
-              <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-black">
-                <p>
-                  <span className="font-medium">Mã lịch hẹn:</span>{" "}
-                  #{appointmentId}
-                </p>
-                <p>
-                  <span className="font-medium">Bác sĩ:</span>{" "}
-                  {doctor?.name || "Chưa chọn"}
-                </p>
-                <p>
-                  <span className="font-medium">Chuyên khoa:</span>{" "}
-                  {service?.name || "Chưa chọn"}
-                </p>
-                <p>
-                  <span className="font-medium">Ngày khám:</span>{" "}
-                  {date || "Chưa chọn"}
-                </p>
-                <p>
-                  <span className="font-medium">Giờ khám:</span>{" "}
-                  {time || "Chưa chọn"}
-                </p>
+            <div className="bg-white rounded-2xl shadow-lg border border-cyan-100 overflow-hidden">
+              <div className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white px-8 py-4 flex items-center gap-3">
+                <Stethoscope className="w-7 h-7 bg-white/20 p-1 rounded" />
+                <h2 className="text-xl font-semibold">Chi tiết lịch hẹn</h2>
+              </div>
+              <div className="p-8">
+                <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl p-6 space-y-4 border border-cyan-200">
+                  <div className="flex justify-between"><strong>Mã lịch hẹn:</strong> <span className="text-cyan-700 font-mono">#{appointmentId}</span></div>
+                  <div className="flex justify-between"><strong>Bác sĩ:</strong> <span className="text-blue-700">{doctor?.name}</span></div>
+                  <div className="flex justify-between"><strong>Chuyên khoa:</strong> <span>{service?.name}</span></div>
+                  <div className="flex items-center justify-between">
+                    <strong>Ngày khám:</strong>
+                    <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-cyan-600" /> {date}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <strong>Giờ khám:</strong>
+                    <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-cyan-600" /> {time}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* 3. Phương thức thanh toán */}
-            <div className="bg-white rounded-xl shadow p-6 space-y-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2 text-black">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-white text-sm">
-                  3
-                </span>
-                Phương thức thanh toán
-              </h2>
-              <div className="space-y-3">
-                {/* MoMo */}
-                <div
-                  onClick={() => setMethod("momo")}
-                  className="flex items-center gap-3 border border-gray-300 rounded-lg p-3 cursor-pointer transition hover:border-green-500"
-                >
-                  <img src="/doctors/momo.png" alt="MoMo" className="w-8 h-8" />
-                  <span className="text-black">Ví MoMo (phổ biến)</span>
-                </div>
-
-                {/* VNPay */}
-                <div
-                  onClick={() => setMethod("vnpay")}
-                  className="flex items-center gap-3 border border-gray-300 rounded-lg p-3 cursor-pointer transition hover:border-green-500"
-                >
-                  <img src="/doctors/VNpay.png" alt="VNPay" className="w-8 h-8" />
-                  <span className="text-black">VNPay (QR Code)</span>
-                </div>
-
-                {/* PayPal */}
-                <div
-                  onClick={() => setMethod("paypal")}
-                  className="flex items-center gap-3 border border-gray-300 rounded-lg p-3 cursor-pointer transition hover:border-green-500"
-                >
-                  <img src="/doctors/paypal.png" alt="PayPal" className="w-8 h-8" />
-                  <span className="text-black">PayPal (thanh toán quốc tế)</span>
-                </div>
-
-                {/* Thẻ tín dụng */}
-                <div
-                  onClick={() => setMethod("card")}
-                  className="flex items-center gap-3 border border-gray-300 rounded-lg p-3 cursor-pointer transition hover:border-green-500"
-                >
-                  <img src="/doctors/visa.png" alt="Visa Mastercard" className="w-12 h-8" />
-                  <span className="text-black">
-                    Thẻ tín dụng/ghi nợ (Visa, Mastercard, JCB)
-                  </span>
+            <div className="bg-white rounded-2xl shadow-lg border border-cyan-100 overflow-hidden">
+              <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 flex items-center gap-3">
+                <CreditCard className="w-7 h-7" />
+                <h2 className="text-xl font-semibold">Phương thức thanh toán</h2>
+              </div>
+              <div className="p-8">
+                <div className="border-2 border-dashed border-cyan-300 rounded-xl p-6 text-center bg-cyan-50">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="bg-gradient-to-br from-emerald-500 to-cyan-600 text-white p-4 rounded-full">
+                      <ShieldCheck className="w-12 h-12" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-cyan-800">Thanh toán giả lập (Demo)</p>
+                      <p className="text-sm text-gray-600 mt-1">Mô phỏng thanh toán an toàn trong môi trường thử nghiệm</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Điều khoản */}
-            <div className="bg-white rounded-xl shadow p-6 space-y-4">
-              <label className="flex items-start gap-2">
+            {/* Đồng ý điều khoản & Nút thanh toán */}
+            <div className="bg-white rounded-2xl shadow-lg border border-cyan-100 p-8">
+              <label className="flex items-start gap-4 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={agree}
                   onChange={(e) => setAgree(e.target.checked)}
-                  className="mt-1"
+                  className="w-6 h-6 text-cyan-600 rounded focus:ring-cyan-500 border-gray-300 mt-1"
                 />
-                <span className="text-sm text-gray-700">
-                  Tôi đồng ý với{" "}
-                  <a href="#" className="text-teal-700 hover:underline">
-                    điều khoản sử dụng
-                  </a>{" "}
-                  và{" "}
-                  <a href="#" className="text-teal-700 hover:underline">
-                    chính sách bảo mật
-                  </a>{" "}
-                  của MediCare. Tôi xác nhận rằng thông tin đã cung cấp là chính
-                  xác.
+                <span className="text-gray-700 leading-relaxed">
+                  Tôi đã đọc và đồng ý với <span className="text-cyan-600 font-medium underline">Điều khoản dịch vụ</span> và <span className="text-cyan-600 font-medium underline">Chính sách bảo mật</span> của phòng khám.
                 </span>
               </label>
-              <div className="text-sm text-gray-500 flex items-center gap-2">
-                🔒 Thông tin thanh toán của bạn được mã hóa và bảo mật tuyệt đối
-              </div>
+
               <button
                 type="submit"
-                className="w-full py-3 rounded-lg bg-black text-white font-medium hover:bg-gray-900 transition"
+                disabled={!agree}
+                className="mt-8 w-full py-5 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold text-xl rounded-xl shadow-lg transform transition hover:scale-[1.02] disabled:scale-100 flex items-center justify-center gap-3"
               >
-                Xác nhận thanh toán
+                <ShieldCheck className="w-6 h-6" />
+                Xác nhận thanh toán • {total.toLocaleString()}₫
+                <ChevronRight className="w-6 h-6" />
               </button>
             </div>
           </div>
 
-          {/* Cột phải */}
-          <div className="bg-white rounded-xl shadow p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-black">
-              Tóm tắt đơn hàng
-            </h2>
-            <p className="flex justify-between text-black">
-              <span>Khám chuyên khoa {service?.name || "..."}</span>
-              <span className="font-medium">
-                {fee?.toLocaleString() || "0"}đ
-              </span>
-            </p>
-            <p className="text-sm text-gray-600">{doctor?.name || "BS ..."}</p>
-            <p className="text-sm text-gray-600">
-              {date || "..."} • {time || "..."}
-            </p>
-            <hr />
-            <p className="flex justify-between text-black">
-              <span>Phí khám</span>
-              <span>{fee?.toLocaleString() || "0"}đ</span>
-            </p>
-            <p className="flex justify-between text-black">
-              <span>Phí dịch vụ</span>
-              <span>{serviceFee.toLocaleString()}đ</span>
-            </p>
-            <p className="flex justify-between text-green-600 font-medium">
-              <span>Giảm giá (Khách hàng mới)</span>
-              <span>-{discount.toLocaleString()}đ</span>
-            </p>
-            <hr />
-            <p className="flex justify-between font-semibold text-lg text-black">
-              <span>Tổng cộng</span>
-              <span>{total.toLocaleString()}đ</span>
-            </p>
+          {/* ==================== RIGHT SUMMARY ==================== */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-2xl shadow-xl border border-cyan-100 overflow-hidden sticky top-6">
+              <div className="bg-gradient-to-r from-cyan-600 to-blue-700 text-white px-8 py-5">
+                <h3 className="text-xl font-bold flex items-center gap-3">
+                  <HeartPulse className="w-7 h-7" />
+                  Tóm tắt đơn hàng
+                </h3>
+              </div>
 
-            <div className="bg-gray-50 p-3 rounded-lg text-sm text-black">
-              <p className="font-medium text-teal-700">Đặt lịch thành công!</p>
-              <p>
-                Bạn sẽ nhận được xác nhận qua SMS và email sau khi thanh toán
-              </p>
+              <div className="p-8 space-y-5 text-gray-800">
+                <div>
+                  <p className="text-2xl font-bold text-cyan-700">{doctor?.name}</p>
+                  <p className="text-sm text-gray-500 mt-1">{service?.name}</p>
+                  <p className="text-sm text-gray-500 flex items-center gap-2 mt-2">
+                    <Calendar className="w-4 h-4" /> {date} • <Clock className="w-4 h-4" /> {time}
+                  </p>
+                </div>
+
+                <div className="border-t pt-5 space-y-4">
+                  <div className="flex justify-between text-lg">
+                    <span>Phí khám bệnh</span>
+                    <span className="font-semibold">{fee?.toLocaleString()}₫</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Phí dịch vụ</span>
+                    <span>{serviceFee.toLocaleString()}₫</span>
+                  </div>
+                  <div className="flex justify-between text-green-600 font-semibold">
+                    <span>Khuyến mãi</span>
+                    <span>-{discount.toLocaleString()}₫</span>
+                  </div>
+                </div>
+
+                <div className="border-t-2 border-dashed border-cyan-200 pt-5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-2xl font-bold text-gray-900">Tổng cộng</span>
+                    <span className="text-3xl font-extrabold text-cyan-600">
+                      {total.toLocaleString()}₫
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-cyan-50 rounded-xl p-4 text-center">
+                  <p className="text-sm text-cyan-800 font-medium flex items-center justify-center gap-2">
+                    <ShieldCheck className="w-5 h-5" />
+                    Thanh toán an toàn • Bảo mật 100%
+                  </p>
+                </div>
+              </div>
             </div>
-
-            <div className="bg-gray-50 p-3 rounded-lg text-sm text-black">
-              <p className="font-medium">Chính sách hủy lịch</p>
-              <ul className="list-disc ml-5">
-                <li>Miễn phí hủy trước 24 giờ</li>
-                <li>Hoàn 50% trong vòng 12 giờ</li>
-                <li>Không hoàn tiền trong 6 giờ</li>
-              </ul>
-            </div>
-
-            <p className="text-sm text-gray-500">📞 Hỗ trợ 24/7: 1900-0009</p>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }
