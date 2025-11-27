@@ -1,18 +1,28 @@
 import { useState, useMemo, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import axios from "axios";
-import { useLocation } from "react-router-dom";
 import {
-  Clock, MapPin, Star, Users, Award, CheckCircle, Send,
-  ChevronDown, Calendar, User, Building2, Phone
+  Clock,
+  MapPin,
+  Star,
+  Users,
+  Award,
+  CheckCircle,
+  Send,
+  ChevronDown,
+  Calendar,
+  User,
+  Building2,
+  Phone,
 } from "lucide-react";
 
 import { api } from "../store/api.js";
 import { auth } from "../store/auth";
 
-// Component con để tách biệt phần đặt lịch (clean code)
-// Component con để tách biệt phần đặt lịch (clean code)
+// ================================
+// Booking Panel (component con)
+// ================================
 const BookingPanel = ({
   services,
   serviceId,
@@ -29,9 +39,9 @@ const BookingPanel = ({
 }) => {
   const today = dayjs();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [slots, setSlots] = useState([]); // <-- NEW: slot từ backend
+  const [slots, setSlots] = useState([]); // slot lấy từ backend
 
-  // Tính danh sách 7 ngày
+  // Danh sách 7 ngày
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = today.add(i, "day");
     return {
@@ -42,7 +52,7 @@ const BookingPanel = ({
     };
   });
 
-  // Lấy service đang chọn
+  // Service đang chọn
   const selectedService = services.find(
     (s) => String(s.id) === String(serviceId)
   );
@@ -51,61 +61,53 @@ const BookingPanel = ({
   // API thật: lấy slot từ backend
   // ================================
   const fetchSlots = async () => {
-  if (!doctor?.id || !selectedService) return;
+    if (!doctor?.id || !selectedService) return;
 
-  try {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    const res = await axios.get(
-      "http://localhost:8080/api/appointments/slots",
-      {
-        params: {
-          doctorId: doctor.id,
-          date: date,
-          duration: selectedService.duration_minutes,
-        },
-        headers: token
-          ? { Authorization: `Bearer ${token}` }
-          : {},
-      }
-    );
+      const res = await axios.get(
+        "http://localhost:8080/api/appointments/slots",
+        {
+          params: {
+            doctorId: doctor.id,
+            date: date,
+            duration: selectedService.duration_minutes,
+          },
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
 
-    setSlots(res.data || []);
-
-  } catch (err) {
-    console.error("Lỗi tải slot:", err);
-    setSlots([]);
-  }
-};
-
-
+      setSlots(res.data || []);
+    } catch (err) {
+      console.error("Lỗi tải slot:", err);
+      setSlots([]);
+    }
+  };
 
   // Gọi API mỗi khi ngày hoặc dịch vụ thay đổi
   useEffect(() => {
     fetchSlots();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doctor, date, serviceId]);
 
-  // Phân chia sáng – chiều
-  // Lọc slot theo giờ hiện tại (chỉ ẩn slot quá giờ nếu là ngày hôm nay)
-    const filteredSlots = useMemo(() => {
-      return slots.filter((s) => {
-        const slotTime = dayjs(s.start_at);
-        const selectedDay = dayjs(date);
-        const now = currentTime;
+  // Lọc slot (ẩn slot đã qua nếu là hôm nay)
+  const filteredSlots = useMemo(() => {
+    return slots.filter((s) => {
+      const slotTime = dayjs(s.start_at);
+      const selectedDay = dayjs(date);
+      const now = currentTime;
 
-        // Nếu ngày đang chọn là hôm nay → ẩn slot đã trôi qua
-        if (selectedDay.isSame(now, "day")) {
-          return slotTime.isAfter(now);
-        }
+      if (selectedDay.isSame(now, "day")) {
+        return slotTime.isAfter(now);
+      }
+      return true;
+    });
+  }, [slots, currentTime, date]);
 
-        // Nếu không phải hôm nay → giữ nguyên slot
-        return true;
-      });
-    }, [slots, currentTime, date]);
-
-    // Phân chia sáng – chiều sau khi lọc
-    const morning = filteredSlots.filter((s) => dayjs(s.start_at).hour() < 12);
-    const afternoon = filteredSlots.filter((s) => dayjs(s.start_at).hour() >= 12);
+  // Chia sáng / chiều
+  const morning = filteredSlots.filter((s) => dayjs(s.start_at).hour() < 12);
+  const afternoon = filteredSlots.filter((s) => dayjs(s.start_at).hour() >= 12);
 
   return (
     <div className="bg-white rounded-3xl shadow-2xl border border-blue-100 p-8 sticky top-6 space-y-7">
@@ -141,7 +143,7 @@ const BookingPanel = ({
         </div>
       </div>
 
-      {/* Chọn ngày */}
+      {/* Ngày khám */}
       <div>
         <label className="text-sm font-bold text-gray-900">Ngày khám</label>
         <div className="mt-3 space-y-3">
@@ -287,30 +289,45 @@ const BookingPanel = ({
   );
 };
 
-
+// ================================
+// Doctor Detail Page
+// ================================
 export default function DoctorDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const user = auth.getCurrentUser();
-  console.log(">>> isLoggedIn():", auth.isLoggedIn());
-console.log(">>> getCurrentUser():", auth.getCurrentUser());
-console.log(">>> token:", localStorage.getItem("token"));
-console.log(">>> email:", localStorage.getItem("email"));
-console.log(">>> role:", localStorage.getItem("role"));
-console.log(">>> medbook-db-v1:", localStorage.getItem("medbook-db-v1"));
-console.log(">>> users:", localStorage.getItem("users"));
 
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(dayjs());
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Review state
-  const [reviews, setReviews] = useState([
-    { id: 1, author: "Nguyễn Thị B", rating: 5, text: "Bác sĩ rất tận tình, khám chi tiết. Sẽ tái khám lần sau!", date: "2024-11-20" },
-    { id: 2, author: "Trần Văn C", rating: 4, text: "Khám tốt, nhân viên thân thiện. Thời gian chờ hơi lâu.", date: "2024-11-18" },
-    { id: 3, author: "Lê Thị D", rating: 5, text: "Rất hài lòng với dịch vụ. Bác sĩ giải thích rõ tình trạng bệnh.", date: "2024-11-15" },
-  ]);
+  // Review state (backend + fallback demo)
+  const [reviews, setReviews] = useState([]);
+  const fallbackReviews = [
+    {
+      id: 1,
+      author: "Nguyễn Thị B",
+      rating: 5,
+      text: "Bác sĩ rất tận tình, khám chi tiết. Sẽ tái khám lần sau!",
+      date: "2024-11-20",
+    },
+    {
+      id: 2,
+      author: "Trần Văn C",
+      rating: 4,
+      text: "Khám tốt, nhân viên thân thiện. Thời gian chờ hơi lâu.",
+      date: "2024-11-18",
+    },
+    {
+      id: 3,
+      author: "Lê Thị D",
+      rating: 5,
+      text: "Rất hài lòng với dịch vụ. Bác sĩ giải thích rõ tình trạng bệnh.",
+      date: "2024-11-15",
+    },
+  ];
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
 
@@ -325,7 +342,9 @@ console.log(">>> users:", localStorage.getItem("users"));
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await axios.get(`http://localhost:8080/api/doctors/${id}`);
+        const res = await axios.get(
+          `http://localhost:8080/api/doctors/${id}`
+        );
         setDoctor(res.data);
       } catch (err) {
         console.error(err);
@@ -336,71 +355,94 @@ console.log(">>> users:", localStorage.getItem("users"));
     load();
   }, [id]);
 
+  // Đảm bảo serviceId có giá trị khi services load xong
+  useEffect(() => {
+    if (services.length > 0 && !serviceId) {
+      setServiceId(services[0].id);
+    }
+  }, [services, serviceId]);
+
   // Clock
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(dayjs()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Submit review
+  // Load reviews từ backend (nếu có)
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:8080/api/appointments/doctor/${id}/reviews`
+        );
+        setReviews(res.data || []);
+      } catch (err) {
+        console.error("Lỗi tải reviews:", err);
+        setReviews([]);
+      }
+    };
+    loadReviews();
+  }, [id]);
+
+  // Submit review (hiện tại chỉ push local, không lưu backend)
   const handleSubmitReview = () => {
     if (!reviewText.trim()) return alert("Vui lòng nhập nội dung đánh giá");
-    setReviews([
-      {
-        id: Date.now(),
-        author: user?.name || "Khách",
-        rating: reviewRating,
-        text: reviewText,
-        date: dayjs().format("YYYY-MM-DD"),
-      },
-      ...reviews,
-    ]);
+    const newReview = {
+      id: Date.now(),
+      author: user?.name || "Khách",
+      rating: reviewRating,
+      text: reviewText,
+      date: dayjs().format("YYYY-MM-DD"),
+    };
+    setReviews((prev) => [newReview, ...prev]);
     setReviewText("");
     setReviewRating(5);
   };
 
   // Book appointment
-  const location = useLocation();
   const handleBook = async () => {
-  if (!user) return navigate("/login", { state: { from: location.pathname } });
-  if (!serviceId || !selectedSlot) return alert("Vui lòng chọn đầy đủ thông tin");
+    if (!user)
+      return navigate("/login", { state: { from: location.pathname } });
+    if (!serviceId || !selectedSlot)
+      return alert("Vui lòng chọn đầy đủ thông tin");
 
-  try {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    const dateTime = dayjs(selectedSlot.start_at);
-    const appointmentDate = dateTime.format("YYYY-MM-DDTHH:mm:ss"); 
-    const appointmentTime = dateTime.format("HH:mm:ss");
+      const dateTime = dayjs(selectedSlot.start_at);
+      // BE dùng LocalDate + LocalTime
+      const appointmentDate = dateTime.format("YYYY-MM-DD");
+      const appointmentTime = dateTime.format("HH:mm:ss");
 
-    const res = await axios.post(
-      "http://localhost:8080/api/appointments",
-      {
-        doctorId: Number(id),
-        serviceId: Number(serviceId),
-        appointmentDate,
-        appointmentTime,
-        status: "PENDING",
-      },
-      {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      }
-    );
+      const res = await axios.post(
+        "http://localhost:8080/api/appointments",
+        {
+          doctorId: Number(doctor?.id), // dùng chính id từ API doctor
+          serviceId: Number(serviceId),
+          appointmentDate,
+          appointmentTime,
+          status: "PENDING",
+        },
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
 
-    navigate(`/payment/${res.data.id}`, {
-      state: {
-        doctor,
-        service: services.find(s => s.id === Number(serviceId)),
-        date,
-        time: dateTime.format("HH:mm"),
-        fee: services.find(s => s.id === Number(serviceId))?.fee || 0,
-      },
-    });
-  } catch (err) {
-    console.error(err);
-    alert("Đặt lịch thất bại. Vui lòng thử lại.");
-  }
-};
-
+      navigate(`/payment/${res.data.id}`, {
+        state: {
+          doctor,
+          service: services.find((s) => s.id === Number(serviceId)),
+          date,
+          time: dateTime.format("HH:mm"),
+          fee:
+            services.find((s) => s.id === Number(serviceId))?.fee || 0,
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Đặt lịch thất bại. Vui lòng thử lại.");
+    }
+  };
 
   if (loading) {
     return (
@@ -425,11 +467,17 @@ console.log(">>> users:", localStorage.getItem("users"));
     clinic: "Phòng khám Đa khoa Quốc tế",
     address: "273 An Dương Vương, Quận 5, TP.HCM",
     phone: "1900 123 456",
-    qualifications: ["Tiến sĩ Y khoa", "Chứng chỉ Tim mạch Quốc tế", "Hội viên Hội Tim mạch Việt Nam"],
+    qualifications: [
+      "Tiến sĩ Y khoa",
+      "Chứng chỉ Tim mạch Quốc tế",
+      "Hội viên Hội Tim mạch Việt Nam",
+    ],
     rating: 4.9,
     reviewsCount: 312,
     experience: 15,
   };
+
+  const listReviews = reviews.length > 0 ? reviews : fallbackReviews;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50">
@@ -475,7 +523,9 @@ console.log(">>> users:", localStorage.getItem("users"));
                         <Award className="w-6 h-6 text-blue-600" />
                         <div>
                           <p className="text-sm text-gray-600">Kinh nghiệm</p>
-                          <p className="font-bold text-gray-900">{doctor.experience || fallback.experience} năm</p>
+                          <p className="font-bold text-gray-900">
+                            {doctor.experience || fallback.experience} năm
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -483,7 +533,8 @@ console.log(">>> users:", localStorage.getItem("users"));
                         <div>
                           <p className="text-sm text-gray-600">Đánh giá</p>
                           <p className="font-bold text-gray-900">
-                            {(doctor.rating || fallback.rating).toFixed(1)} ({doctor.reviewsCount || fallback.reviewsCount})
+                            {(doctor.rating || fallback.rating).toFixed(1)} (
+                            {doctor.reviewsCount || fallback.reviewsCount})
                           </p>
                         </div>
                       </div>
@@ -491,7 +542,9 @@ console.log(">>> users:", localStorage.getItem("users"));
                         <Users className="w-6 h-6 text-green-600" />
                         <div>
                           <p className="text-sm text-gray-600">Trạng thái</p>
-                          <p className="font-bold text-green-600">Đang nhận bệnh</p>
+                          <p className="font-bold text-green-600">
+                            Đang nhận bệnh
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -503,22 +556,24 @@ console.log(">>> users:", localStorage.getItem("users"));
             {/* Tabs */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <div className="flex border-b border-gray-200">
-                {["overview", "location", "qualifications", "reviews"].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`flex-1 py-5 font-semibold transition ${
-                      activeTab === tab
-                        ? "text-blue-600 border-b-3 border-blue-600"
-                        : "text-gray-600 hover:text-gray-900"
-                    }`}
-                  >
-                    {tab === "overview" && "Tổng quan"}
-                    {tab === "location" && "Địa điểm"}
-                    {tab === "qualifications" && "Bằng cấp"}
-                    {tab === "reviews" && "Đánh giá"}
-                  </button>
-                ))}
+                {["overview", "location", "qualifications", "reviews"].map(
+                  (tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`flex-1 py-5 font-semibold transition ${
+                        activeTab === tab
+                          ? "text-blue-600 border-b-3 border-blue-600"
+                          : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      {tab === "overview" && "Tổng quan"}
+                      {tab === "location" && "Địa điểm"}
+                      {tab === "qualifications" && "Bằng cấp"}
+                      {tab === "reviews" && "Đánh giá"}
+                    </button>
+                  )
+                )}
               </div>
 
               <div className="p-10">
@@ -527,7 +582,8 @@ console.log(">>> users:", localStorage.getItem("users"));
                   <div className="prose max-w-none">
                     <h3 className="text-2xl font-bold mb-4">Giới thiệu</h3>
                     <p className="text-gray-700 leading-relaxed text-lg">
-                      {doctor.bio || "Bác sĩ là chuyên gia hàng đầu trong lĩnh vực tim mạch với nhiều năm kinh nghiệm điều trị các bệnh lý phức tạp."}
+                      {doctor.bio ||
+                        "Bác sĩ là chuyên gia hàng đầu trong lĩnh vực tim mạch với nhiều năm kinh nghiệm điều trị các bệnh lý phức tạp."}
                     </p>
                   </div>
                 )}
@@ -539,12 +595,16 @@ console.log(">>> users:", localStorage.getItem("users"));
                         <Building2 className="w-7 h-7 text-blue-600" />
                         Phòng khám
                       </h3>
-                      <p className="text-lg font-semibold text-gray-800">{doctor.clinic || fallback.clinic}</p>
+                      <p className="text-lg font-semibold text-gray-800">
+                        {doctor.clinic || fallback.clinic}
+                      </p>
                     </div>
                     <div className="flex gap-4 text-gray-700">
                       <MapPin className="w-6 h-6 text-blue-600 mt-1" />
                       <div>
-                        <p className="font-medium">{doctor.address || fallback.address}</p>
+                        <p className="font-medium">
+                          {doctor.address || fallback.address}
+                        </p>
                         <p className="flex items-center gap-2 mt-3">
                           <Phone className="w-5 h-5" />
                           {doctor.phone || fallback.phone}
@@ -556,14 +616,23 @@ console.log(">>> users:", localStorage.getItem("users"));
 
                 {activeTab === "qualifications" && (
                   <div>
-                    <h3 className="text-2xl font-bold mb-6">Bằng cấp & Chứng chỉ</h3>
+                    <h3 className="text-2xl font-bold mb-6">
+                      Bằng cấp & Chứng chỉ
+                    </h3>
                     <ul className="space-y-4">
-                      {(doctor.qualifications || fallback.qualifications).map((q, i) => (
-                        <li key={i} className="flex items-center gap-4">
-                          <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                          <span className="text-lg text-gray-800 font-medium">{q}</span>
-                        </li>
-                      ))}
+                      {(doctor.qualifications || fallback.qualifications).map(
+                        (q, i) => (
+                          <li
+                            key={i}
+                            className="flex items-center gap-4"
+                          >
+                            <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                            <span className="text-lg text-gray-800 font-medium">
+                              {q}
+                            </span>
+                          </li>
+                        )
+                      )}
                     </ul>
                   </div>
                 )}
@@ -572,26 +641,41 @@ console.log(">>> users:", localStorage.getItem("users"));
                   <div className="space-y-10">
                     {/* Form review */}
                     <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-8 border border-blue-200">
-                      <h4 className="text-xl font-bold mb-6">Viết đánh giá của bạn</h4>
+                      <h4 className="text-xl font-bold mb-6">
+                        Viết đánh giá của bạn
+                      </h4>
                       <div className="space-y-5">
                         <div>
-                          <label className="block font-semibold mb-3">Đánh giá sao</label>
+                          <label className="block font-semibold mb-3">
+                            Đánh giá sao
+                          </label>
                           <div className="flex gap-3">
-                            {[1,2,3,4,5].map(n => (
-                              <button key={n} onClick={() => setReviewRating(n)}>
-                                <Star className={`w-10 h-10 transition ${reviewRating >= n ? "text-amber-500 fill-amber-500" : "text-gray-300"}`} />
+                            {[1, 2, 3, 4, 5].map((n) => (
+                              <button
+                                key={n}
+                                type="button"
+                                onClick={() => setReviewRating(n)}
+                              >
+                                <Star
+                                  className={`w-10 h-10 transition ${
+                                    reviewRating >= n
+                                      ? "text-amber-500 fill-amber-500"
+                                      : "text-gray-300"
+                                  }`}
+                                />
                               </button>
                             ))}
                           </div>
                         </div>
                         <textarea
                           value={reviewText}
-                          onChange={e => setReviewText(e.target.value)}
+                          onChange={(e) => setReviewText(e.target.value)}
                           placeholder="Chia sẻ trải nghiệm của bạn..."
                           rows={4}
                           className="w-full rounded-xl border-2 border-blue-200 px-5 py-4 focus:border-blue-500 focus:outline-none resize-none"
                         />
                         <button
+                          type="button"
                           onClick={handleSubmitReview}
                           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition"
                         >
@@ -602,22 +686,39 @@ console.log(">>> users:", localStorage.getItem("users"));
 
                     {/* List reviews */}
                     <div className="space-y-6">
-                      {reviews.map(r => (
-                        <div key={r.id} className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition">
+                      {listReviews.map((r) => (
+                        <div
+                          key={r.id}
+                          className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition"
+                        >
                           <div className="flex justify-between items-start mb-4">
                             <div>
                               <p className="font-bold text-gray-900 flex items-center gap-2">
-                                <User className="w-5 h-5" /> {r.author}
+                                <User className="w-5 h-5" />{" "}
+                                {r.author || r.patientEmail || "Bệnh nhân"}
                               </p>
-                              <p className="text-sm text-gray-500">{dayjs(r.date).format("DD/MM/YYYY")}</p>
+                              <p className="text-sm text-gray-500">
+                                {dayjs(r.date || r.ratedAt).format(
+                                  "DD/MM/YYYY"
+                                )}
+                              </p>
                             </div>
                             <div className="flex gap-1">
                               {[...Array(5)].map((_, i) => (
-                                <Star key={i} className={`w-5 h-5 ${i < r.rating ? "text-amber-500 fill-amber-500" : "text-gray-300"}`} />
+                                <Star
+                                  key={i}
+                                  className={`w-5 h-5 ${
+                                    i < (r.rating || 0)
+                                      ? "text-amber-500 fill-amber-500"
+                                      : "text-gray-300"
+                                  }`}
+                                />
                               ))}
                             </div>
                           </div>
-                          <p className="text-gray-700 leading-relaxed">{r.text}</p>
+                          <p className="text-gray-700 leading-relaxed">
+                            {r.text || r.ratingComment || "Không có nhận xét"}
+                          </p>
                         </div>
                       ))}
                     </div>

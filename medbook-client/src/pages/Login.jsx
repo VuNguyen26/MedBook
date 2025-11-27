@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../store/AuthContext";
 import userApi from "../api/userApi";
+import axios from "axios";
 import { Mail, Lock, LogIn, Calendar, Stethoscope, Home } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -16,6 +17,7 @@ export default function Login() {
 
   const from = location.state?.from?.pathname || "/";
 
+  // Nếu user đã login → redirect theo role
   useEffect(() => {
     if (!user) return;
 
@@ -30,67 +32,79 @@ export default function Login() {
     setLoading(true);
 
     try {
+      // 1. Login → lấy JWT
       const res = await userApi.login({ email, password });
-      const { token, role } = res.data;
+      const { token } = res.data;
 
       if (!token) {
-        toast.error("Không nhận được mã xác thực từ máy chủ!", {
-          theme: "colored",
-          autoClose: 4000,
-        });
+        toast.error("Không nhận được mã xác thực!", { theme: "colored" });
         return;
       }
 
-      setAuthUser(token, { role, email });
+      // 2. Gọi /users/me để lấy thông tin chính xác
+      const meRes = await axios.get(
+        "http://localhost:8080/api/users/me",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
+      const userInfo = meRes.data;
+      console.log(">>> /users/me:", userInfo);
+
+      // 3. Lưu vào AuthContext
+      setAuthUser(token, {
+        id: userInfo.id,
+        email: userInfo.email,
+        role: userInfo.role,
+        name: userInfo.name
+      });
+
+      // 4. Lưu vào localStorage
+      localStorage.setItem("user", JSON.stringify(userInfo));
+
+      if (userInfo.role === "DOCTOR") {
+        localStorage.setItem("doctor", JSON.stringify(userInfo));
+      }
+
+      if (userInfo.role === "PATIENT") {
+        localStorage.setItem("patient", JSON.stringify(userInfo));
+      }
+
+      // 5. Redirect
       let redirectPath = "/";
-      if (role === "ADMIN") redirectPath = "/admin/dashboard";
-      else if (role === "DOCTOR") redirectPath = "/doctor/schedule";
+      if (userInfo.role === "ADMIN") redirectPath = "/admin/dashboard";
+      else if (userInfo.role === "DOCTOR") redirectPath = "/doctor/schedule";
       else redirectPath = from;
 
       navigate(redirectPath, { replace: true });
 
-      let successMsg = "Đăng nhập thành công!";
-      if (role === "ADMIN") successMsg = "Đăng nhập với quyền quản trị viên thành công!";
-      else if (role === "DOCTOR") successMsg = "Đăng nhập với quyền bác sĩ thành công!";
+      // 6. Toast
+      let msg = "Đăng nhập thành công!";
+      if (userInfo.role === "ADMIN") msg = "Đăng nhập Admin!";
+      else if (userInfo.role === "DOCTOR") msg = "Đăng nhập Bác sĩ!";
 
       setTimeout(() => {
-        toast.success(successMsg, {
-          theme: "colored",
-          autoClose: 2500,
-          pauseOnHover: false,
-        });
+        toast.success(msg, { theme: "colored" });
       }, 300);
+
     } catch (err) {
       console.error("Lỗi đăng nhập:", err);
+
       let msg =
         err.response?.data?.message ||
         err.response?.data?.error ||
         "Email hoặc mật khẩu không chính xác!";
 
-      const translations = {
-        "Invalid email or password": "Email hoặc mật khẩu không chính xác!",
-        "User not found": "Không tìm thấy người dùng!",
-        "Password incorrect": "Mật khẩu không chính xác!",
-        "Account disabled": "Tài khoản của bạn đã bị vô hiệu hóa!",
-        "Access denied": "Bạn không có quyền truy cập!",
-      };
-      msg = translations[msg] || msg;
+      toast.error(msg, { theme: "colored" });
 
-      toast.error(msg, {
-        theme: "colored",
-        autoClose: 4000,
-        pauseOnHover: true,
-      });
     } finally {
       setLoading(false);
     }
   };
-
   // ==================== UI ====================
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center px-4 py-8 relative">
       <div className="w-full max-w-5xl relative">
+        
         {/* ===== NÚT QUAY VỀ TRANG CHỦ ===== */}
         <div className="absolute top-4 right-4 z-50">
           <Link
@@ -104,6 +118,7 @@ export default function Login() {
 
         {/* ===== KHUNG LOGIN ===== */}
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden grid lg:grid-cols-2">
+          
           {/* Bên trái: Hero */}
           <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-10 text-white flex flex-col justify-between">
             <div>
@@ -149,6 +164,7 @@ export default function Login() {
           {/* Bên phải: Form */}
           <div className="p-8 lg:p-12 flex flex-col justify-center bg-white">
             <div className="max-w-md mx-auto w-full">
+              
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold text-gray-900">Chào mừng trở lại</h2>
                 <p className="mt-2 text-sm text-gray-600">
@@ -157,6 +173,7 @@ export default function Login() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                
                 {/* Email */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -176,7 +193,7 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* Mật khẩu */}
+                {/* Password */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-semibold text-gray-700">
@@ -189,6 +206,7 @@ export default function Login() {
                       Quên mật khẩu?
                     </Link>
                   </div>
+
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <input
@@ -200,6 +218,7 @@ export default function Login() {
                       placeholder="••••••••"
                       disabled={loading}
                     />
+
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
@@ -210,7 +229,7 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* Nút đăng nhập */}
+                {/* Button */}
                 <button
                   type="submit"
                   disabled={loading}
@@ -234,17 +253,14 @@ export default function Login() {
                 </button>
               </form>
 
-              {/* ========== OAuth2 Buttons ========== */}
+              {/* OAuth */}
               <div className="my-6 flex items-center">
                 <div className="flex-grow h-px bg-gray-200"></div>
-                <span className="px-4 text-sm text-gray-500">
-                  Hoặc đăng nhập bằng
-                </span>
+                <span className="px-4 text-sm text-gray-500">Hoặc đăng nhập bằng</span>
                 <div className="flex-grow h-px bg-gray-200"></div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* Google Login */}
                 <a
                   href="http://localhost:8080/oauth2/authorization/google"
                   className="flex items-center justify-center gap-2 w-full py-3.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-200 shadow-sm"
@@ -257,7 +273,6 @@ export default function Login() {
                   <span>Google</span>
                 </a>
 
-                {/* Facebook Login */}
                 <a
                   href="http://localhost:8080/oauth2/authorization/facebook"
                   className="flex items-center justify-center gap-2 w-full py-3.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-all duration-200 shadow-sm"
@@ -280,6 +295,7 @@ export default function Login() {
                   Đăng ký miễn phí
                 </Link>
               </p>
+
             </div>
           </div>
         </div>

@@ -67,13 +67,40 @@ export default function Payment() {
         return;
       }
 
-      const bookingState = { appointmentId: Number(appointmentId), doctor, service, date, time, fee, total };
+      // ⭐ THANH TOÁN THÀNH CÔNG → GỬI paymentSuccess
+      const bookingState = {
+        appointmentId: Number(appointmentId),
+        doctor,
+        service,
+        date,
+        time,
+        fee,
+        total,
+        paymentSuccess: true,
+      };
+
       const encoded = encodeURIComponent(JSON.stringify(bookingState));
       window.location.href = `${data.payUrl}&state=${encoded}`;
+
     } catch (err) {
+      // ⭐ THANH TOÁN THẤT BẠI → ĐI SANG PaymentFail.jsx
+      navigate(`/payment-fail/${appointmentId}`, {
+        state: {
+          appointmentId: Number(appointmentId),
+          doctor,
+          service,
+          date,
+          time,
+          fee,
+          total,
+          paymentFail: true,
+        }
+      });
+
       toast.error("Thanh toán thất bại, vui lòng thử lại!");
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">

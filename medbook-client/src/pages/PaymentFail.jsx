@@ -8,27 +8,55 @@ export default function PaymentFail() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Nhận lại toàn bộ state
   const bookingState = location.state || {};
-
   const { doctor, date, time, paymentFail } = bookingState;
 
-  // Anti duplicate toast
+  // Prevent duplicate toast
   const shownRef = useRef(false);
+
+  // =========================
+  // UPDATE BE → ĐÁNH DẤU PAYMENT FAILED
+  // =========================
   useEffect(() => {
-    if (paymentFail === true && !shownRef.current) {
+    async function updateFailStatus() {
+      try {
+        const token = localStorage.getItem("token");
+
+        await fetch(`http://localhost:8080/api/appointments/${appointmentId}/fail`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+      } catch (err) {
+        console.error("❌ Lỗi đánh dấu FAIL:", err);
+      }
+    }
+
+    updateFailStatus();
+  }, [appointmentId]);
+
+  // =========================
+  // Toast lỗi
+  // =========================
+  useEffect(() => {
+    if (paymentFail && !shownRef.current) {
       shownRef.current = true;
       toast.error("❌ Thanh toán thất bại!");
     }
   }, [paymentFail]);
 
-  // QUAN TRỌNG: khi retry → gửi lại toàn bộ bookingState
+  // =========================
+  // Retry thanh toán
+  // =========================
   const handleRetry = () => {
     navigate(`/payment/${appointmentId}`, {
       state: {
         ...bookingState,
-        retry: true
-      }
+        retry: true,
+      },
     });
   };
 

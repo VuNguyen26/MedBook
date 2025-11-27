@@ -68,7 +68,8 @@ export default function App() {
       "/terms",
       "/privacy",
     ].includes(location.pathname) ||
-    location.pathname.startsWith("/admin")
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/doctor/")
 
   return (
     <div className="min-h-screen flex flex-col">
