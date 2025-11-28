@@ -29,40 +29,63 @@ function ChatbotWidget() {
     scrollToBottom()
   }, [messages])
 
-  const handleSendMessage = (e) => {
-    e.preventDefault()
-    if (!inputValue.trim()) return
+  const handleSendMessage = async (e) => {
+  e.preventDefault();
+  if (!inputValue.trim()) return;
 
-    const userMsg = {
-      id: Date.now().toString(),
-      text: inputValue,
-      sender: "user",
-      timestamp: new Date(),
-    }
+  const userMsg = {
+    id: Date.now().toString(),
+    text: inputValue,
+    sender: "user",
+    timestamp: new Date(),
+  };
 
-    setMessages((prev) => [...prev, userMsg])
-    setInputValue("")
-    setIsLoading(true)
+  setMessages((prev) => [...prev, userMsg]);
+  const question = inputValue;
+  setInputValue("");
+  setIsLoading(true);
 
-    setTimeout(() => {
-      const botReplies = [
-        "Tôi hiểu rồi. Bạn có muốn tôi giúp bạn tìm bác sĩ phù hợp không?",
-        "Tuyệt vời! Hãy để tôi tìm những bác sĩ tốt nhất cho bạn.",
-        "Bạn có thể cho tôi biết thêm về tình trạng sức khỏe của bạn không?",
-        "Tôi cũng có thể giúp bạn xem lịch khám trống.",
-      ]
+  try {
+    const token = localStorage.getItem("token");
 
-      const botResponse = {
-        id: (Date.now() + 1).toString(),
-        text: botReplies[Math.floor(Math.random() * botReplies.length)],
-        sender: "bot",
-        timestamp: new Date(),
+    const res = await axios.post(
+      "http://localhost:8080/api/ai/chat-smart",
+      { question },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token ? `Bearer ${token}` : "",
+        },
       }
+    );
 
-      setMessages((prev) => [...prev, botResponse])
-      setIsLoading(false)
-    }, 600)
+    const aiText = res.data.answer || "❌ MedBook AI không trả lời được.";
+
+    const botResponse = {
+      id: (Date.now() + 1).toString(),
+      text: aiText,
+      sender: "bot",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, botResponse]);
+  } catch (err) {
+    console.error("AI Error:", err);
+
+    const errorResponse = {
+      id: (Date.now() + 2).toString(),
+      text: "❌ Xin lỗi, hệ thống AI đang gặp sự cố.",
+      sender: "bot",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, errorResponse]);
   }
+
+  setIsLoading(false);
+};
+
+
 
   // Nút mở chatbot
   if (!isOpen) {
@@ -240,7 +263,7 @@ export default function Home() {
       desc: "Chuyên gia khuyến cáo chế độ ăn nhiều chất xơ, giảm muối và hạn chế thực phẩm chế biến sẵn giúp giảm nguy cơ đau tim và đột quỵ.",
       date: "Feb 2025",
       url: "https://vnexpress.net/an-uong-the-nao-de-giam-nguy-co-benh-tim-mach-4789479.html",
-      image: "https://i1-suckhoe.vnecdn.net/2025/02/12/benh-tim-mach-6232-1739348574.jpg?w=680&h=408&q=100&dpr=1&fit=crop&s=cAXU6L4OZq7YXrWi1BFEyg"
+      image: "https://suckhoedoisong.qltns.mediacdn.vn/324455921873985536/2024/2/7/hiep-hoi-tim-mach-my-goi-y-che-do-an-tot-cho-trai-tim11682655464-1707314938681557242601.png"
     },
     {
       id: 2,
@@ -249,7 +272,7 @@ export default function Home() {
       desc: "Các nhà khoa học cho biết thiếu ngủ kéo dài gây rối loạn hormone và tăng mức độ căng thẳng, ảnh hưởng trực tiếp đến sức khỏe tinh thần.",
       date: "Feb 2025",
       url: "https://suckhoedoisong.vn/ngu-it-hon-6-tieng-moi-ngay-lam-tang-nguy-co-tram-cam-169250206092509566.htm",
-      image: "https://media.suckhoedoisong.vn/Images/phuongnhi/2025/02/06/ngu-it.jpg"
+      image: "https://suckhoedoisong.qltns.mediacdn.vn/Images/nguyenhong/2018/08/22/mat-ngu-ca91de66a2291ea6-1530534844-582-width640height426.jpg"
     },
     {
       id: 3,
@@ -258,7 +281,7 @@ export default function Home() {
       desc: "Chuyên gia dinh dưỡng khuyến cáo bổ sung vitamin C, kẽm và chất chống oxy hóa để tăng sức đề kháng trong mùa lạnh.",
       date: "Feb 2025",
       url: "https://nld.com.vn/suc-khoe/nhung-thuc-pham-giup-tang-mien-dich-20250208111921294.htm",
-      image: "https://photo-baomoi.bmcdn.me/w700_r16x9_sm/2025_02_08_83_49715252/aea80fe16b5f45c2432bccfa5a8b3210.jpg"
+      image: "https://cdn.nbtv.vn/upload/news/12_2024/20220122_mua_lanh_nen_an_gi_1_16104031122024.jpg"
     }
   ];
 
