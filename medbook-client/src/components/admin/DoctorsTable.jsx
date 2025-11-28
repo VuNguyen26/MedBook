@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -6,10 +6,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   MoreHorizontal,
   Mail,
@@ -18,7 +18,7 @@ import {
   Trash2,
   Calendar,
   Star,
-} from "lucide-react"
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,85 +26,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-
-// ==================== Data ====================
-const doctors = [
-  {
-    id: 1,
-    name: "Dr. Sarah Johnson",
-    specialty: "Cardiology",
-    email: "sarah.johnson@hospital.com",
-    phone: "+1 234 567 8900",
-    status: "available",
-    rating: 4.9,
-    patients: 234,
-    experience: "15 years",
-  },
-  {
-    id: 2,
-    name: "Dr. Michael Chen",
-    specialty: "Neurology",
-    email: "michael.chen@hospital.com",
-    phone: "+1 234 567 8901",
-    status: "busy",
-    rating: 4.8,
-    patients: 198,
-    experience: "12 years",
-  },
-  {
-    id: 3,
-    name: "Dr. Emily Davis",
-    specialty: "Pediatrics",
-    email: "emily.davis@hospital.com",
-    phone: "+1 234 567 8902",
-    status: "available",
-    rating: 4.9,
-    patients: 312,
-    experience: "10 years",
-  },
-  {
-    id: 4,
-    name: "Dr. James Wilson",
-    specialty: "Orthopedics",
-    email: "james.wilson@hospital.com",
-    phone: "+1 234 567 8903",
-    status: "available",
-    rating: 4.7,
-    patients: 187,
-    experience: "18 years",
-  },
-  {
-    id: 5,
-    name: "Dr. Maria Garcia",
-    specialty: "Dermatology",
-    email: "maria.garcia@hospital.com",
-    phone: "+1 234 567 8904",
-    status: "leave",
-    rating: 4.8,
-    patients: 156,
-    experience: "8 years",
-  },
-  {
-    id: 6,
-    name: "Dr. Robert Taylor",
-    specialty: "General Surgery",
-    email: "robert.taylor@hospital.com",
-    phone: "+1 234 567 8905",
-    status: "busy",
-    rating: 4.9,
-    patients: 203,
-    experience: "20 years",
-  },
-]
+} from "@/components/ui/select";
+import doctorApi from "@/api/doctorApi";
+import { toast } from "react-toastify";
 
 const statusConfig = {
   available: {
@@ -119,7 +51,7 @@ const statusConfig = {
     label: "On Leave",
     className: "bg-red-100 text-red-700 hover:bg-red-200",
   },
-}
+};
 
 const specialties = [
   "All Specialties",
@@ -129,28 +61,84 @@ const specialties = [
   "Orthopedics",
   "Dermatology",
   "General Surgery",
-]
+];
 
 // ==================== Component ====================
 export default function DoctorsTable({ filter }) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [specialtyFilter, setSpecialtyFilter] = useState("All Specialties")
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [specialtyFilter, setSpecialtyFilter] = useState("All Specialties");
 
-  const [openId, setOpenId] = useState(null)
+  const [openId, setOpenId] = useState(null);
 
-  const [openSelect, setOpenSelect] = useState(false)
-  const triggerRef = useRef(null)
+  const [openSelect, setOpenSelect] = useState(false);
+  const triggerRef = useRef(null);
+
+  // Fetch doctors data
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        setLoading(true);
+        const response = await doctorApi.getAll();
+        // Assuming the API returns doctors in response.data
+        setDoctors(response.data || []);
+      } catch (err) {
+        console.error("Error fetching doctors:", err);
+        setError(err.message || "Failed to fetch doctors");
+        toast.error("Failed to load doctors data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
 
   const filteredDoctors = doctors.filter((doctor) => {
     const matchesSearch =
-      doctor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doctor.specialty.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = !filter || filter === "all" || doctor.status === filter
+      (doctor.name || doctor.fullName || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (doctor.specialty || doctor.specialization || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+    const matchesStatus =
+      !filter || filter === "all" || (doctor.status || "available") === filter;
     const matchesSpecialty =
       specialtyFilter === "All Specialties" ||
-      doctor.specialty === specialtyFilter
-    return matchesSearch && matchesStatus && matchesSpecialty
-  })
+      (doctor.specialty || doctor.specialization) === specialtyFilter;
+    return matchesSearch && matchesStatus && matchesSpecialty;
+  });
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-center py-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-gray-500">Loading doctors...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-center py-8">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">Error: {error}</p>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Retry
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -223,14 +211,32 @@ export default function DoctorsTable({ filter }) {
               </TableRow>
             ) : (
               filteredDoctors.map((doctor) => (
-                <TableRow key={doctor.id}>
+                <TableRow key={doctor.id || doctor.doctorId}>
                   {/* Doctor info */}
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src="/generic-placeholder-graphic.png" />
+                        <AvatarImage
+                          src={
+                            doctor.imageUrl || doctor.image_url || doctor.avatar
+                              ? (
+                                  doctor.imageUrl ||
+                                  doctor.image_url ||
+                                  doctor.avatar
+                                ).startsWith("http")
+                                ? doctor.imageUrl ||
+                                  doctor.image_url ||
+                                  doctor.avatar
+                                : `${window.location.origin}${
+                                    doctor.imageUrl ||
+                                    doctor.image_url ||
+                                    doctor.avatar
+                                  }`
+                              : "/generic-placeholder-graphic.png"
+                          }
+                        />
                         <AvatarFallback>
-                          {doctor.name
+                          {(doctor.name || doctor.fullName || "D")
                             .split(" ")
                             .slice(1)
                             .map((n) => n[0])
@@ -238,16 +244,22 @@ export default function DoctorsTable({ filter }) {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{doctor.name}</div>
+                        <div className="font-medium">
+                          {doctor.name || doctor.fullName || "Unknown Doctor"}
+                        </div>
                         <div className="text-sm text-muted-foreground">
-                          {doctor.experience}
+                          {doctor.experience ||
+                            doctor.yearsOfExperience ||
+                            "Experience N/A"}
                         </div>
                       </div>
                     </div>
                   </TableCell>
 
                   <TableCell>
-                    <Badge variant="outline">{doctor.specialty}</Badge>
+                    <Badge variant="outline">
+                      {doctor.specialty || doctor.specialization || "N/A"}
+                    </Badge>
                   </TableCell>
 
                   {/* Contact */}
@@ -255,11 +267,11 @@ export default function DoctorsTable({ filter }) {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 text-sm">
                         <Mail className="h-3 w-3 text-muted-foreground" />
-                        {doctor.email}
+                        {doctor.email || "No email"}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Phone className="h-3 w-3" />
-                        {doctor.phone}
+                        {doctor.phone || doctor.phoneNumber || "No phone"}
                       </div>
                     </div>
                   </TableCell>
@@ -268,9 +280,19 @@ export default function DoctorsTable({ filter }) {
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className={statusConfig[doctor.status].className}
+                      className={
+                        (
+                          statusConfig[doctor.status || "available"] ||
+                          statusConfig["available"]
+                        ).className
+                      }
                     >
-                      {statusConfig[doctor.status].label}
+                      {
+                        (
+                          statusConfig[doctor.status || "available"] ||
+                          statusConfig["available"]
+                        ).label
+                      }
                     </Badge>
                   </TableCell>
 
@@ -278,13 +300,17 @@ export default function DoctorsTable({ filter }) {
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-medium">{doctor.rating}</span>
+                      <span className="font-medium">
+                        {doctor.rating || doctor.averageRating || "N/A"}
+                      </span>
                     </div>
                   </TableCell>
 
                   {/* Patients */}
                   <TableCell>
-                    <span className="font-medium">{doctor.patients}</span>
+                    <span className="font-medium">
+                      {doctor.patientsCount || doctor.patientCount || 0}
+                    </span>
                   </TableCell>
 
                   {/* Actions */}
@@ -337,5 +363,5 @@ export default function DoctorsTable({ filter }) {
         </Table>
       </div>
     </div>
-  )
+  );
 }

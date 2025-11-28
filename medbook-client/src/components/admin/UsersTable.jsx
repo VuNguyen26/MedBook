@@ -28,63 +28,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-
-const users = [
-  {
-    id: 1,
-    name: "John Smith",
-    email: "john.smith@email.com",
-    phone: "+1 234 567 8900",
-    status: "active",
-    joinDate: "2024-01-15",
-    appointments: 12,
-  },
-  {
-    id: 2,
-    name: "Emma Wilson",
-    email: "emma.wilson@email.com",
-    phone: "+1 234 567 8901",
-    status: "active",
-    joinDate: "2024-02-20",
-    appointments: 8,
-  },
-  {
-    id: 3,
-    name: "Robert Brown",
-    email: "robert.brown@email.com",
-    phone: "+1 234 567 8902",
-    status: "inactive",
-    joinDate: "2023-11-10",
-    appointments: 5,
-  },
-  {
-    id: 4,
-    name: "Lisa Anderson",
-    email: "lisa.anderson@email.com",
-    phone: "+1 234 567 8903",
-    status: "active",
-    joinDate: "2024-03-05",
-    appointments: 15,
-  },
-  {
-    id: 5,
-    name: "David Lee",
-    email: "david.lee@email.com",
-    phone: "+1 234 567 8904",
-    status: "blocked",
-    joinDate: "2023-09-12",
-    appointments: 3,
-  },
-  {
-    id: 6,
-    name: "Sarah Martinez",
-    email: "sarah.martinez@email.com",
-    phone: "+1 234 567 8905",
-    status: "active",
-    joinDate: "2024-01-28",
-    appointments: 10,
-  },
-]
+import userApi from "@/api/userApi";
+import { toast } from "react-toastify";
 
 const statusConfig = {
   active: {
@@ -99,24 +44,79 @@ const statusConfig = {
     label: "Blocked",
     className: "bg-red-100 text-red-700",
   },
-}
+};
 
 export default function UsersTable({ filter }) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [openId, setOpenId] = useState(null)
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [openId, setOpenId] = useState(null);
+
+  // Fetch users data
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const response = await userApi.getAll();
+        // Assuming the API returns users in response.data
+        // You may need to adjust based on actual API response structure
+        setUsers(response.data || []);
+      } catch (err) {
+        console.error("Error fetching users:", err);
+        setError(err.message || "Failed to fetch users");
+        toast.error("Failed to load users data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   // Đóng dropdown khi đổi filter hoặc search
   useEffect(() => {
-    setOpenId(null)
-  }, [filter, searchQuery])
+    setOpenId(null);
+  }, [filter, searchQuery]);
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesFilter = !filter || filter === "all" || user.status === filter
-    return matchesSearch && matchesFilter
-  })
+      (user.name || user.fullName || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (user.email || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter =
+      !filter || filter === "all" || (user.status || "active") === filter;
+    return matchesSearch && matchesFilter;
+  });
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-center py-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-gray-500">Loading users...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-center py-8">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">Error: {error}</p>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Retry
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -135,11 +135,21 @@ export default function UsersTable({ filter }) {
         <Table>
           <TableHeader className="bg-gray-50">
             <TableRow>
-              <TableHead className="font-semibold text-gray-700">User</TableHead>
-              <TableHead className="font-semibold text-gray-700">Contact</TableHead>
-              <TableHead className="font-semibold text-gray-700">Status</TableHead>
-              <TableHead className="font-semibold text-gray-700">Join Date</TableHead>
-              <TableHead className="font-semibold text-gray-700">Appointments</TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                User
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Contact
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Status
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Join Date
+              </TableHead>
+              <TableHead className="font-semibold text-gray-700">
+                Appointments
+              </TableHead>
               <TableHead className="text-right font-semibold text-gray-700">
                 Actions
               </TableHead>
@@ -159,24 +169,32 @@ export default function UsersTable({ filter }) {
             ) : (
               filteredUsers.map((user) => (
                 <TableRow
-                  key={user.id}
+                  key={user.id || user.userId}
                   className="hover:bg-gray-50 transition-colors duration-150"
                 >
                   {/* User */}
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10 border">
-                        <AvatarImage src="/generic-placeholder-graphic.png" />
+                        <AvatarImage
+                          src={
+                            user.avatar || "/generic-placeholder-graphic.png"
+                          }
+                        />
                         <AvatarFallback>
-                          {user.name
+                          {(user.name || user.fullName || "U")
                             .split(" ")
                             .map((n) => n[0])
                             .join("")}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium text-gray-900">{user.name}</div>
-                        <div className="text-xs text-gray-500">ID: {user.id}</div>
+                        <div className="font-medium text-gray-900">
+                          {user.name || user.fullName || "Unknown User"}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          ID: {user.id || user.userId}
+                        </div>
                       </div>
                     </div>
                   </TableCell>
@@ -186,11 +204,11 @@ export default function UsersTable({ filter }) {
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5 text-sm text-gray-700">
                         <Mail className="h-3.5 w-3.5 text-gray-400" />
-                        {user.email}
+                        {user.email || "No email"}
                       </div>
                       <div className="flex items-center gap-1.5 text-sm text-gray-500">
                         <Phone className="h-3.5 w-3.5 text-gray-400" />
-                        {user.phone}
+                        {user.phone || user.phoneNumber || "No phone"}
                       </div>
                     </div>
                   </TableCell>
@@ -199,21 +217,37 @@ export default function UsersTable({ filter }) {
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${statusConfig[user.status].className}`}
+                      className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${
+                        (
+                          statusConfig[user.status || "active"] ||
+                          statusConfig["active"]
+                        ).className
+                      }`}
                     >
-                      {statusConfig[user.status].label}
+                      {
+                        (
+                          statusConfig[user.status || "active"] ||
+                          statusConfig["active"]
+                        ).label
+                      }
                     </Badge>
                   </TableCell>
 
                   {/* Join Date */}
                   <TableCell className="text-sm text-gray-600">
-                    {user.joinDate}
+                    {user.createdAt || user.joinDate || user.registrationDate
+                      ? new Date(
+                          user.createdAt ||
+                            user.joinDate ||
+                            user.registrationDate
+                        ).toLocaleDateString()
+                      : "N/A"}
                   </TableCell>
 
                   {/* Appointments */}
                   <TableCell>
                     <span className="font-semibold text-gray-800">
-                      {user.appointments}
+                      {user.appointmentsCount || user.appointmentCount || 0}
                     </span>
                   </TableCell>
 
@@ -226,7 +260,11 @@ export default function UsersTable({ filter }) {
                           setOpenId(openId === user.id ? null : user.id)
                         }
                       >
-                        <Button variant="ghost" size="icon" className="hover:bg-gray-100">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="hover:bg-gray-100"
+                        >
                           <MoreHorizontal className="h-4 w-4 text-gray-600" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -282,5 +320,5 @@ export default function UsersTable({ filter }) {
         </Table>
       </div>
     </div>
-  )
+  );
 }

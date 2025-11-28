@@ -49,16 +49,19 @@ export default function Payment() {
 
     try {
       const token = localStorage.getItem("token");
+      const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
       const payload = {
         appointmentId: Number(appointmentId),
         amount: total,
         success: true,
       };
 
+      // 1) Gọi fake payment để giữ flow demo / FakeGateway
       const res = await axios.post(
         "http://localhost:8080/api/payments/fake",
         payload,
-        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        { headers: authHeaders }
       );
 
       const data = res.data;
@@ -67,7 +70,21 @@ export default function Payment() {
         return;
       }
 
-      // ⭐ THANH TOÁN THÀNH CÔNG → GỬI paymentSuccess
+      // 2) Gọi payment thật để lưu DB + kích hoạt gửi email booking thành công
+      try {
+        await axios.post(
+          "http://localhost:8080/api/payments",
+          {
+            appointmentId: Number(appointmentId),
+            amount: total,
+          },
+          { headers: authHeaders }
+        );
+      } catch (err) {
+        console.warn("Không thể tạo payment thật / gửi email:", err);
+      }
+
+      // 3) Điều hướng sang FakeGateway như cũ
       const bookingState = {
         appointmentId: Number(appointmentId),
         doctor,
@@ -136,7 +153,7 @@ export default function Payment() {
                   <div className="relative">
                     <User className="absolute left-4 top-4 text-cyan-600 w-5 h-5" />
                     <input
-                      defaultValue="Nguyễn Văn A"
+                      defaultValue="Phan Chí Bảo"
                       className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition"
                       placeholder="Họ và tên"
                       required
@@ -146,7 +163,7 @@ export default function Payment() {
                   <div className="relative">
                     <Phone className="absolute left-4 top-4 text-cyan-600 w-5 h-5" />
                     <input
-                      defaultValue="0912345678"
+                      defaultValue="0123456789"
                       className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition"
                       placeholder="Số điện thoại"
                       required
@@ -157,6 +174,7 @@ export default function Payment() {
                     <Mail className="absolute left-4 top-4 text-cyan-600 w-5 h-5" />
                     <input
                       type="email"
+                      defaultValue="pcbao159@gmail.com"
                       placeholder="email@example.com"
                       className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition"
                     />
@@ -166,6 +184,7 @@ export default function Payment() {
                     <Calendar className="absolute left-4 top-4 text-cyan-600 w-5 h-5" />
                     <input
                       type="date"
+                      defaultValue="2003-04-19"
                       className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition"
                       required
                     />
