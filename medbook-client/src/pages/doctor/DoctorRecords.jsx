@@ -12,7 +12,7 @@ export default function DoctorRecords() {
   const [doctor, setDoctor] = useState(null);
   const [records, setRecords] = useState([]);
 
-  // ⭐ Bước 1 — từ email user -> tìm doctor
+  // Bước 1 — từ email user -> tìm doctor
   useEffect(() => {
     async function loadDoctor() {
       try {
@@ -29,14 +29,14 @@ export default function DoctorRecords() {
         console.log(">>> Doctor:", res.data);
 
       } catch (err) {
-        console.error("❌ Không tìm thấy bác sĩ:", err);
+        console.error(" Không tìm thấy bác sĩ:", err);
       }
     }
 
     loadDoctor();
   }, [user]);
 
-  // ⭐ Bước 2 — Khi có doctor.id -> lấy danh sách reviews
+  // Bước 2 — Khi có doctor.id -> lấy danh sách reviews
   useEffect(() => {
     if (!doctor?.id) return;
 
@@ -60,7 +60,7 @@ export default function DoctorRecords() {
 
               return {
                 ...r,
-                patientName: p.data.full_name,   // ⭐ đúng key
+                patientName: p.data.full_name,
               };
 
             } catch (err) {
@@ -84,7 +84,7 @@ export default function DoctorRecords() {
     <div className="bg-white shadow-sm rounded-lg p-6">
       <div className="flex items-center gap-2 mb-4">
         <FileText className="text-teal-600" />
-        <h1 className="text-2xl font-bold text-teal-700">Hồ sơ bệnh án</h1>
+        <h1 className="text-2xl font-bold text-teal-700">Đánh giá của khách hàng</h1>
       </div>
 
       {!doctor && (
