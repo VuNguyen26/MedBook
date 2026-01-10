@@ -1,103 +1,152 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
 import { FileText, Star } from "lucide-react";
 
-export default function DoctorRecords() {
+const API_BASE_URL = "http://localhost:8080/api";
 
+export default function DoctorRecords() {
   const token = localStorage.getItem("token");
-  const userJson = localStorage.getItem("user");
-  const user = userJson ? JSON.parse(userJson) : null;
+  const user = useMemo(() => {
+    const raw = localStorage.getItem("user");
+    return raw ? JSON.parse(raw) : null;
+  }, []);
+
+  const authHeaders = useMemo(() => {
+    if (!token) return {};
+    return { Authorization: `Bearer ${token}` };
+  }, [token]);
 
   const [doctor, setDoctor] = useState(null);
   const [records, setRecords] = useState([]);
 
-  // Bước 1 — từ email user -> tìm doctor
+  const [loadingDoctor, setLoadingDoctor] = useState(false);
+  const [loadingRecords, setLoadingRecords] = useState(false);
+  const [errorDoctor, setErrorDoctor] = useState("");
+  const [errorRecords, setErrorRecords] = useState("");
+
+  // Bước 1: email -> doctor
   useEffect(() => {
-    async function loadDoctor() {
+    if (!user?.email) return;
+
+    const controller = new AbortController();
+
+    async function fetchDoctor() {
+      setLoadingDoctor(true);
+      setErrorDoctor("");
+
       try {
-        if (!user?.email) return;
-
         const res = await axios.get(
-          `http://localhost:8080/api/doctors/email/${encodeURIComponent(
-            user.email
-          )}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          `${API_BASE_URL}/doctors/email/${encodeURIComponent(user.email)}`,
+          { headers: authHeaders, signal: controller.signal }
         );
-
-        setDoctor(res.data);
-        console.log(">>> Doctor:", res.data);
-
+        setDoctor(res.data ?? null);
       } catch (err) {
-        console.error(" Không tìm thấy bác sĩ:", err);
+        if (axios.isCancel?.(err)) return;
+        setDoctor(null);
+        setErrorDoctor("Không tìm thấy thông tin bác sĩ gắn với tài khoản.");
+        // console.error(err);
+      } finally {
+        setLoadingDoctor(false);
       }
     }
 
-    loadDoctor();
-  }, [user]);
+    fetchDoctor();
+    return () => controller.abort();
+  }, [user?.email, authHeaders]);
 
-  // Bước 2 — Khi có doctor.id -> lấy danh sách reviews
+  // Bước 2: doctor.id -> reviews -> map patientName
   useEffect(() => {
     if (!doctor?.id) return;
 
-    async function loadReviews() {
+    const controller = new AbortController();
+
+    async function fetchRecords() {
+      setLoadingRecords(true);
+      setErrorRecords("");
+
       try {
         const res = await axios.get(
-          `http://localhost:8080/api/appointments/doctor/${doctor.id}/reviews`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          `${API_BASE_URL}/appointments/doctor/${doctor.id}/reviews`,
+          { headers: authHeaders, signal: controller.signal }
         );
 
-        const reviews = res.data || [];
+        const reviews = Array.isArray(res.data) ? res.data : [];
 
-        const mapped = await Promise.all(
-          reviews.map(async (r) => {
+        // Cache patient theo patientId để không gọi trùng nếu nhiều review cùng 1 bệnh nhân
+        const patientCache = new Map();
+
+        const withPatientName = await Promise.all(
+          reviews.map(async (review) => {
+            const patientId = review?.patientId;
+            if (!patientId) return { ...review, patientName: "Ẩn Danh" };
+
+            if (patientCache.has(patientId)) {
+              return { ...review, patientName: patientCache.get(patientId) };
+            }
+
             try {
-              // ⭐ Lấy theo patientId (đúng nhất)
-              const p = await axios.get(
-                `http://localhost:8080/api/patients/${r.patientId}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-              );
+              const p = await axios.get(`${API_BASE_URL}/patients/${patientId}`, {
+                headers: authHeaders,
+                signal: controller.signal,
+              });
 
-              return {
-                ...r,
-                patientName: p.data.full_name,
-              };
+              const name = p?.data?.full_name || "Ẩn Danh";
+              patientCache.set(patientId, name);
 
+              return { ...review, patientName: name };
             } catch (err) {
-              console.error("❌ Lỗi lấy bệnh nhân:", err);
-              return { ...r, patientName: "Ẩn Danh" };
+              if (axios.isCancel?.(err)) return review;
+              return { ...review, patientName: "Ẩn Danh" };
             }
           })
         );
 
-        setRecords(mapped);
-
+        setRecords(withPatientName);
       } catch (err) {
-        console.error("❌ Lỗi tải reviews:", err);
+        if (axios.isCancel?.(err)) return;
+        setRecords([]);
+        setErrorRecords("Lỗi tải danh sách đánh giá.");
+        // console.error(err);
+      } finally {
+        setLoadingRecords(false);
       }
     }
 
-    loadReviews();
-  }, [doctor, token]);
+    fetchRecords();
+    return () => controller.abort();
+  }, [doctor?.id, authHeaders]);
+
+  const isLoading = loadingDoctor || loadingRecords;
 
   return (
     <div className="bg-white shadow-sm rounded-lg p-6">
       <div className="flex items-center gap-2 mb-4">
         <FileText className="text-teal-600" />
-        <h1 className="text-2xl font-bold text-teal-700">Đánh giá của khách hàng</h1>
+        <h1 className="text-2xl font-bold text-teal-700">
+          Đánh giá của khách hàng
+        </h1>
       </div>
 
-      {!doctor && (
+      {isLoading && (
+        <p className="text-sm text-gray-500">Đang tải dữ liệu...</p>
+      )}
+
+      {!isLoading && (errorDoctor || !doctor) && (
         <p className="text-sm text-gray-500">
-          Không tìm thấy thông tin bác sĩ gắn với tài khoản.
+          {errorDoctor || "Không tìm thấy thông tin bác sĩ gắn với tài khoản."}
         </p>
       )}
 
-      {records.length === 0 && (
+      {!isLoading && doctor && errorRecords && (
+        <p className="text-sm text-red-600">{errorRecords}</p>
+      )}
+
+      {!isLoading && doctor && !errorRecords && records.length === 0 && (
         <p className="text-gray-600 mt-3">Chưa có đánh giá nào.</p>
       )}
 
-      {records.length > 0 && (
+      {!isLoading && doctor && !errorRecords && records.length > 0 && (
         <table className="min-w-full text-sm">
           <thead>
             <tr className="bg-gray-100 text-gray-600">
@@ -108,34 +157,37 @@ export default function DoctorRecords() {
               <th className="p-3 text-left">Nhận xét</th>
             </tr>
           </thead>
+
           <tbody>
-            {records.map((a) => (
-              <tr key={a.id} className="border-b hover:bg-gray-50">
-                <td className="p-3 font-semibold">{a.patientName}</td>
+            {records.map((r) => (
+              <tr key={r.id} className="border-b hover:bg-gray-50">
+                <td className="p-3 font-semibold">
+                  {r.patientName || "Ẩn Danh"}
+                </td>
 
                 <td className="p-3">
-                  {a.appointmentDate
-                    ? dayjs(a.appointmentDate).format("DD/MM/YYYY")
+                  {r.appointmentDate
+                    ? dayjs(r.appointmentDate).format("DD/MM/YYYY")
                     : "-"}
                 </td>
 
                 <td className="p-3">
-                  {a.appointmentTime
-                    ? a.appointmentTime.slice(0, 5)
-                    : "--:--"}
+                  {r.appointmentTime ? r.appointmentTime.slice(0, 5) : "--:--"}
                 </td>
 
-                <td className="p-3 flex gap-1">
-                  {[...Array(a.rating || 0)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="text-amber-400 fill-amber-400 w-4 h-4"
-                    />
-                  ))}
+                <td className="p-3">
+                  <div className="flex gap-1">
+                    {Array.from({ length: r.rating || 0 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className="text-amber-400 fill-amber-400 w-4 h-4"
+                      />
+                    ))}
+                  </div>
                 </td>
 
                 <td className="p-3 text-gray-700">
-                  {a.ratingComment || "Không có nhận xét"}
+                  {r.ratingComment || "Không có nhận xét"}
                 </td>
               </tr>
             ))}
