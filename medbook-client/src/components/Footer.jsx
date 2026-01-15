@@ -1,135 +1,169 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 
-export default function Footer() {
+const QUICK_LINKS = [
+  { to: "/doctors", label: "Bác sĩ" },
+  { to: "/specialties", label: "Chuyên khoa" },
+  { to: "/about", label: "Về chúng tôi" },
+  { to: "/contact", label: "Liên hệ" },
+];
+
+const CONTACT_INFO = [
+  {
+    label: "Hotline",
+    value: "1900-000-111",
+    href: "tel:1900000111",
+  },
+  {
+    label: "Email",
+    value: "support@medbook.vn",
+    href: "mailto:support@medbook.vn",
+  },
+  {
+    label: "Địa chỉ",
+    value: "273 An Dương Vương, phường Chợ Quán, TP.HCM",
+  },
+];
+
+const SOCIALS = [
+  {
+    label: "Facebook",
+    href: "https://facebook.com",
+    icon: "fa-brands fa-facebook-f",
+    external: true,
+  },
+  {
+    label: "WhatsApp",
+    href: "https://wa.me/84901234567",
+    icon: "fa-brands fa-whatsapp",
+    external: true,
+  },
+  {
+    label: "Email",
+    href: "mailto:support@medbook.vn",
+    icon: "fa-solid fa-envelope",
+    external: false,
+  },
+  {
+    label: "Instagram",
+    href: "https://instagram.com",
+    icon: "fa-brands fa-instagram",
+    external: true,
+  },
+  {
+    label: "Telegram",
+    href: "https://t.me/username",
+    icon: "fa-brands fa-telegram",
+    external: true,
+  },
+  {
+    label: "X (Twitter)",
+    href: "https://x.com",
+    icon: "fa-brands fa-x-twitter",
+    external: true,
+  },
+];
+
+function Footer() {
+  const socialBtnClass =
+    "inline-flex w-9 h-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition";
+
+  const linkClass = "hover:text-white transition";
+
   return (
     <footer
       role="contentinfo"
       className="bg-gradient-to-r from-blue-900 to-slate-900 text-slate-300 pt-12"
     >
       <div className="max-w-6xl mx-auto px-6 grid gap-10 md:grid-cols-3">
-
         {/* About */}
-        <section aria-labelledby="footer-about" className="text-center md:text-left">
-          <h3 id="footer-about" className="text-2xl font-bold text-white mb-4">MedBook</h3>
+        <section
+          aria-labelledby="footer-about"
+          className="text-center md:text-left"
+        >
+          <h3
+            id="footer-about"
+            className="text-2xl font-bold text-white mb-4"
+          >
+            MedBook
+          </h3>
+
           <p className="text-slate-400 leading-relaxed">
-            MedBook là nền tảng đặt lịch khám bệnh trực tuyến hiện đại, mang đến giải pháp
-            nhanh chóng, an toàn và tiện lợi cho mọi người. Chúng tôi giúp bệnh nhân dễ dàng
-            lựa chọn chuyên khoa phù hợp, kết nối trực tiếp với đội ngũ bác sĩ uy tín, giàu
-            kinh nghiệm và tận tâm. Với MedBook, hành trình chăm sóc sức khỏe của bạn trở nên
-            đơn giản hơn, minh bạch hơn và đáng tin cậy hơn bao giờ hết.
+            MedBook là nền tảng đặt lịch khám bệnh trực tuyến hiện đại, mang đến
+            giải pháp nhanh chóng, an toàn và tiện lợi cho mọi người. Chúng tôi
+            giúp bệnh nhân dễ dàng lựa chọn chuyên khoa phù hợp, kết nối trực
+            tiếp với đội ngũ bác sĩ uy tín, giàu kinh nghiệm và tận tâm. Với
+            MedBook, hành trình chăm sóc sức khỏe của bạn trở nên đơn giản hơn,
+            minh bạch hơn và đáng tin cậy hơn bao giờ hết.
           </p>
         </section>
 
         {/* Links */}
-        <nav aria-labelledby="footer-links" className="text-center md:text-left md:pl-12">
-          <h4 id="footer-links" className="font-semibold text-white text-lg mb-4">Liên kết</h4>
+        <nav
+          aria-labelledby="footer-links"
+          className="text-center md:text-left md:pl-12"
+        >
+          <h4
+            id="footer-links"
+            className="font-semibold text-white text-lg mb-4"
+          >
+            Liên kết
+          </h4>
+
           <ul className="space-y-2">
-            <li><Link to="/doctors" className="hover:text-white transition">Bác sĩ</Link></li>
-            <li><Link to="/specialties" className="hover:text-white transition">Chuyên khoa</Link></li>
-            <li><Link to="/about" className="hover:text-white transition">Về chúng tôi</Link></li>
-            <li><Link to="/contact" className="hover:text-white transition">Liên hệ</Link></li>
+            {QUICK_LINKS.map((item) => (
+              <li key={item.to}>
+                <Link to={item.to} className={linkClass}>
+                  {item.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </nav>
 
         {/* Contact */}
-        <section aria-labelledby="footer-contact" className="text-center md:text-left">
-          <h4 id="footer-contact" className="font-semibold text-white text-lg mb-4">Liên hệ</h4>
+        <section
+          aria-labelledby="footer-contact"
+          className="text-center md:text-left"
+        >
+          <h4
+            id="footer-contact"
+            className="font-semibold text-white text-lg mb-4"
+          >
+            Liên hệ
+          </h4>
 
           <div className="space-y-1">
-            <p className="text-slate-400">
-              Hotline:{" "}
-              <a href="tel:1900000111" className="hover:underline">
-                1900-000-111
-              </a>
-            </p>
-            <p className="text-slate-400">
-              Email:{" "}
-              <a href="mailto:support@medbook.vn" className="hover:underline">
-                support@medbook.vn
-              </a>
-            </p>
-            <p className="text-slate-400">
-              Địa chỉ: 273 An Dương Vương, phường Chợ Quán, TP.HCM
-            </p>
+            {CONTACT_INFO.map((item) => (
+              <p key={item.label} className="text-slate-400">
+                {item.label}:{" "}
+                {item.href ? (
+                  <a href={item.href} className="hover:underline">
+                    {item.value}
+                  </a>
+                ) : (
+                  <span>{item.value}</span>
+                )}
+              </p>
+            ))}
           </div>
 
           {/* Social contact icons */}
           <div className="flex justify-center md:justify-start gap-3 my-4">
-            {/* Facebook */}
-            <a
-              href="https://facebook.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Facebook"
-              className="inline-flex w-9 h-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition"
-              title="Facebook"
-            >
-              <i className="fa-brands fa-facebook-f text-lg"></i>
-              <span className="sr-only">Facebook</span>
-            </a>
-
-            {/* WhatsApp */}
-            <a
-              href="https://wa.me/84901234567"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="WhatsApp"
-              className="inline-flex w-9 h-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition"
-              title="WhatsApp"
-            >
-              <i className="fa-brands fa-whatsapp text-lg"></i>
-              <span className="sr-only">WhatsApp</span>
-            </a>
-
-            {/* Email */}
-            <a
-              href="mailto:support@medbook.vn"
-              aria-label="Email"
-              className="inline-flex w-9 h-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition"
-              title="Email"
-            >
-              <i className="fa-solid fa-envelope text-lg"></i>
-              <span className="sr-only">Email</span>
-            </a>
-
-            {/* Instagram */}
-            <a
-              href="https://instagram.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Instagram"
-              className="inline-flex w-9 h-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition"
-              title="Instagram"
-            >
-              <i className="fa-brands fa-instagram text-lg"></i>
-              <span className="sr-only">Instagram</span>
-            </a>
-
-            {/* Telegram */}
-            <a
-              href="https://t.me/username"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Telegram"
-              className="inline-flex w-9 h-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition"
-              title="Telegram"
-            >
-              <i className="fa-brands fa-telegram text-lg"></i>
-              <span className="sr-only">Telegram</span>
-            </a>
-
-            {/* X (Twitter) */}
-            <a
-              href="https://x.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="X (Twitter)"
-              className="inline-flex w-9 h-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition"
-              title="X (Twitter)"
-            >
-              <i className="fa-brands fa-x-twitter text-lg"></i>
-              <span className="sr-only">X (Twitter)</span>
-            </a>
+            {SOCIALS.map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                aria-label={s.label}
+                className={socialBtnClass}
+                title={s.label}
+                target={s.external ? "_blank" : undefined}
+                rel={s.external ? "noopener noreferrer" : undefined}
+              >
+                <i className={`${s.icon} text-lg`} />
+                <span className="sr-only">{s.label}</span>
+              </a>
+            ))}
           </div>
 
           {/* Map */}
@@ -149,8 +183,10 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-slate-700 mt-10 py-4 text-center text-slate-500 text-sm">
-        © 2025 MedBook.All rights reserved.
+        © 2025 MedBook. All rights reserved.
       </div>
     </footer>
   );
 }
+
+export default memo(Footer);

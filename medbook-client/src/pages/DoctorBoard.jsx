@@ -1,11 +1,11 @@
 import { useState } from "react"
 import dayjs from "dayjs"
 import { api } from "../store/api"
-import { auth } from "../store/auth"   // ✅ thay vì useAuth
+import { auth } from "../store/auth"
 import DateField from "../components/DateField"
 
 export default function DoctorBoard() {
-  const user = auth.getCurrentUser()   // ✅ lấy user hiện tại
+  const user = auth.getCurrentUser()
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"))
 
   // Tìm bác sĩ gắn với user này
