@@ -8,7 +8,6 @@ const axiosClient = axios.create({
   },
 });
 
-// Gắn token tự động nếu có
 axiosClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -17,13 +16,11 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Xử lý lỗi hợp lý (KHÔNG reload khi login fail)
 axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
 
-    // Nếu lỗi 401 mà đang ở trang khác login → quay lại login
     if (
       status === 401 &&
       !window.location.pathname.startsWith("/login") &&
@@ -34,8 +31,6 @@ axiosClient.interceptors.response.use(
       localStorage.removeItem("email");
       window.location.href = "/login";
     }
-
-    // Giữ nguyên lỗi cho toast xử lý
     return Promise.reject(error);
   }
 );
