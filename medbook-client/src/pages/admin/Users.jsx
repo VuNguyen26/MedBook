@@ -29,7 +29,6 @@ export default function Users() {
     fetchUsersStats();
   }, []);
 
-  // Calculate stats from real data
   const totalUsers = users.length;
   const activeUsers = users.filter(
     (user) => (user.status || "active") === "active"
@@ -43,7 +42,6 @@ export default function Users() {
   const activeRate =
     totalUsers > 0 ? ((activeUsers / totalUsers) * 100).toFixed(1) : 0;
 
-  // Calculate new users this month (assuming createdAt field)
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   const newThisMonth = users.filter((user) => {
