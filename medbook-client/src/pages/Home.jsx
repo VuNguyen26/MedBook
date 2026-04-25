@@ -31,35 +31,33 @@ function ChatbotWidget() {
 
   const handleSendMessage = async (e) => {
   e.preventDefault();
-  if (!inputValue.trim()) return;
+
+  const question = inputValue.trim();
+  if (!question) return;
 
   const userMsg = {
     id: Date.now().toString(),
-    text: inputValue,
+    text: question,
     sender: "user",
     timestamp: new Date(),
   };
 
   setMessages((prev) => [...prev, userMsg]);
-  const question = inputValue;
   setInputValue("");
   setIsLoading(true);
 
   try {
-    const token = localStorage.getItem("token");
-
     const res = await axios.post(
-      "http://localhost:8080/api/ai/chat-smart",
+      "http://localhost:8088/api/ai/chat-smart",
       { question },
       {
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : "",
+          "Content-Type": "application/json; charset=utf-8",
         },
       }
     );
 
-    const aiText = res.data.answer || "❌ MedBook AI không trả lời được.";
+    const aiText = res.data?.answer || "❌ MedBook AI không trả lời được.";
 
     const botResponse = {
       id: (Date.now() + 1).toString(),
@@ -80,9 +78,9 @@ function ChatbotWidget() {
     };
 
     setMessages((prev) => [...prev, errorResponse]);
+  } finally {
+    setIsLoading(false);
   }
-
-  setIsLoading(false);
 };
 
 
